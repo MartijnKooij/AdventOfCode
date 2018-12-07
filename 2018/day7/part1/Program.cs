@@ -13,22 +13,30 @@ namespace part1
             var input = File.ReadAllLines("input.txt");
             var steps = ImportSteps(input);
 
-            foreach (var step in steps)
-            {
-                var dependencies = step.Dependencies.Select(s => s.Letter).ToArray();
-                Console.WriteLine($"Step {step.Letter} is dependent on {string.Join(", ", dependencies)}");
-            }
+            LogStepDependencies(steps);
 
             StringBuilder stepOrder = new StringBuilder();
             while (true)
             {
                 var executableSteps = steps.OrderBy(s => s.Letter).Where(s => s.CanBeExecuted);
+                var dependenciesToRemove = new List<Step>();
+                var stepsToRemove = new List<Step>();
                 foreach (var executableStep in executableSteps)
                 {
                     stepOrder.Append(executableStep.Letter);
-                    RemoveStepFromDependencies(steps, executableStep);
-                    steps.Remove(executableStep);
+
+                    dependenciesToRemove.Add(executableStep);
+                    stepsToRemove.Add(executableStep);
+
+                    break;
                 }
+
+                dependenciesToRemove.ForEach(step => RemoveStepFromDependencies(steps, step));
+                stepsToRemove.ForEach(step => steps.Remove(step));
+
+                LogStepDependencies(steps);
+                Console.WriteLine(" --- INTERMEDIATE ANSWER --- ");
+                Console.WriteLine($"The answer is {stepOrder}");
 
                 if (!steps.Any())
                 {
@@ -37,6 +45,16 @@ namespace part1
             }
 
             Console.WriteLine($"The answer is {stepOrder}");
+        }
+
+        private static void LogStepDependencies(List<Step> steps)
+        {
+            Console.WriteLine(" --- LOG --- ");
+            foreach (var step in steps)
+            {
+                var dependencies = step.Dependencies.Select(s => s.Letter).ToArray();
+                Console.WriteLine($"Step {step.Letter} is dependent on {string.Join(", ", dependencies)}");
+            }
         }
 
         private static void RemoveStepFromDependencies(List<Step> steps, Step dependentStep)
@@ -52,10 +70,10 @@ namespace part1
             var steps = new List<Step>();
             foreach (var stepLine in input)
             {
-                // stepLine: Step V must be finished before step B can begin.
+                // stepLine: Step C must be finished before step A can begin.
                 var stepWords = stepLine.Split(' ');
-                var stepLetter = stepWords[1];
-                var dependentStepLetter = stepWords[7];
+                var stepLetter = stepWords[7];
+                var dependentStepLetter = stepWords[1];
 
                 var dependentStep = steps.FirstOrDefault(s => s.Letter == dependentStepLetter);
                 if (dependentStep == null)
@@ -68,6 +86,7 @@ namespace part1
                 if (step == null)
                 {
                     step = new Step(stepLetter);
+                    steps.Add(step);
                 }
 
                 step.AddDistinctDependency(dependentStep);
