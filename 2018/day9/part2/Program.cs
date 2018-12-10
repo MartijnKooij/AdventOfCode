@@ -8,21 +8,28 @@ namespace part1
     {
         static void Main()
         {
-            var input = "411 players; last marble is worth 71058 points".Split(' ');
+            var input = "411 players; last marble is worth 7105800 points".Split(' ');
             var players = int.Parse(input[0]);
             var numberOfMarbles = int.Parse(input[6]);
             var currentMarbleIndex = 0;
             var marble = 0;
             var marbles = new List<int> { marble };
-            var playerScores = Enumerable.Repeat(0, players).ToArray();
+            var playerScores = Enumerable.Repeat((long)0, players).ToArray();
             var player = 0;
 
+            var lastPercentage = 0.0;
             while (true)
             {
                 marble++;
                 if (marble > numberOfMarbles)
                 {
                     break;
+                }
+
+                var percentage = Math.Round(((double)marble / (double)numberOfMarbles) * 100.0, 2);
+                if (percentage > lastPercentage)
+                {
+                    Console.WriteLine($"{percentage} done ({marble} of {numberOfMarbles})");
                 }
 
                 currentMarbleIndex = PlaceMarble(player, marble, currentMarbleIndex, marbles, playerScores);
@@ -38,8 +45,8 @@ namespace part1
             Console.WriteLine($"The answer is {highScore}");
         }
 
-        private static int PlaceMarble(int player, int marble, int currentMarbleIndex, List<int> marbles,
-            IList<int> playerScores)
+        private static int PlaceMarble(
+            int player, int marble, int currentMarbleIndex, List<int> marbles, IList<long> playerScores)
         {
             if (marble % 23 == 0)
             {
