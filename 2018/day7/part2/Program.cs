@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Text;
 
-namespace part1
+namespace part2
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             var input = File.ReadAllLines("input.txt");
             var steps = ImportSteps(input);
@@ -16,16 +16,43 @@ namespace part1
             LogStepDependencies(steps);
 
             var totalTime = 0;
+            var workers = new List<Worker> {new Worker(), new Worker(), new Worker(), new Worker(), new Worker()};
             while (true)
             {
                 var executableSteps = steps.OrderBy(s => s.Letter).Where(s => s.CanBeExecuted);
+
                 foreach (var executableStep in executableSteps)
                 {
-                    RemoveStepFromDependencies(steps, executableStep);
-                    steps.Remove(executableStep);
+                    if (workers.Any(x => x.ActiveStep?.Letter == executableStep.Letter))
+                    {
+                        continue;
+                    }
 
-                    totalTime += (int)executableStep.Letter[0] - 64;
+                    var worker = workers.FirstOrDefault(x => x.IsFree);
+                    if (worker == null)
+                    {
+                        continue;
+                    }
+
+                    worker.AssignWork(executableStep);
+                    Console.WriteLine($"Assigned worker to step {executableStep.Letter} resulting in {worker.WorkTimeLeft} work left at time {totalTime}");
                 }
+
+                Console.WriteLine($"{workers.Count(x => !x.IsFree)} workers are busy");
+
+                foreach (var worker in workers.Where(x => !x.IsFree))
+                {
+                    Console.WriteLine($"Worker is busy on step {worker.ActiveStep.Letter} with {worker.WorkTimeLeft} time left at time {totalTime}");
+                    worker.Work();
+                    if (worker.IsFree)
+                    {
+                        RemoveStepFromDependencies(steps, worker.ActiveStep);
+                        steps.Remove(worker.ActiveStep);
+                        worker.Done();
+                    }
+                }
+
+                totalTime++;
 
                 if (!steps.Any())
                 {
@@ -82,6 +109,30 @@ namespace part1
             }
 
             return steps;
+        }
+    }
+
+    class Worker
+    {
+        public int WorkTimeLeft { get; private set; }
+        public Step ActiveStep { get; private set; }
+        public bool IsFree => WorkTimeLeft <= 0;
+
+        public void Done()
+        {
+            ActiveStep = null;
+            WorkTimeLeft = 0;
+        }
+
+        public void AssignWork(Step step)
+        {
+            ActiveStep = step;
+            WorkTimeLeft = ActiveStep.Letter[0] - 64 + 60;
+        }
+
+        internal void Work()
+        {
+            WorkTimeLeft--;
         }
     }
 
