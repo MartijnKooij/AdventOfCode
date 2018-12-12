@@ -32,7 +32,7 @@ namespace part2
             var currentState = initialState;
 
             var lastPercentage = 0.0;
-            const long totalGenerations = 5000000;//50000000000;
+            const long totalGenerations = 50000000000;//50000000000;
             for (long generation = 0; generation < totalGenerations; generation++)
             {
                 var newState = ComputeState(currentState, growFunctions);
