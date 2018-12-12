@@ -47,8 +47,6 @@ namespace part2
             var sumOfPotsWithPlants = CountPotsWithPlants(currentState, stateOffset);
 
             Console.WriteLine($"The answer is {sumOfPotsWithPlants}");
-
-            Console.ReadLine();
         }
 
         private static ImmutableArray<GrowFunction> ParseGrowFunctions(IReadOnlyList<string> input)
@@ -126,20 +124,25 @@ namespace part2
 
         private static bool[] PadState(bool[] state, ref int stateOffset)
         {
+            var tempState = state.ToList();
             if (state[0])
             {
-                var tempState = state.ToList();
                 tempState.Insert(0, false);
-                state = tempState.ToArray();
                 stateOffset++;
             }
-
-            if (state[state.Length-1])
+            if (state[state.Length - 1])
             {
-                var tempState = state.ToList();
                 tempState.Add(false);
-                state = tempState.ToArray();
             }
+
+            var trimLength = tempState.TakeWhile(x => !x).Count() - 1;
+            for (int t = 0; t < trimLength; t++)
+            {
+                tempState.RemoveAt(0);
+                stateOffset--;
+            }
+
+            state = tempState.ToArray();
 
             return state;
         }
@@ -178,7 +181,7 @@ namespace part2
 
         public GrowFunction(char inputL1, char inputL2, char inputC, char inputR1, char inputR2, char successResult)
         {
-            input = new[] {inputL1 == '#', inputL2 == '#', inputC == '#', inputR1 == '#', inputR2 == '#' };
+            input = new[] { inputL1 == '#', inputL2 == '#', inputC == '#', inputR1 == '#', inputR2 == '#' };
 
             this.successResult = successResult == '#';
         }
