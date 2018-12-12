@@ -16,18 +16,23 @@ namespace part2
 
             for (int g = 2; g < input.Length; g++)
             {
-                var growFunction = input[g];
+                var checkL1 = input[g][0];
+                var checkL2 = input[g][1];
+                var checkC = input[g][2];
+                var checkR1 = input[g][3];
+                var checkR2 = input[g][4];
+                var successResult = input[g][9];
 
                 growFunctionList.Add(
                     (inputL1, inputL2, inputC, inputR1, inputR2) =>
                     {
-                        if (inputL1 == growFunction[0] &&
-                            inputL2 == growFunction[1] &&
-                            inputC == growFunction[2] &&
-                            inputR1 == growFunction[3] &&
-                            inputR2 == growFunction[4])
+                        if (inputL1 == checkL1 &&
+                            inputL2 == checkL2 &&
+                            inputC == checkC &&
+                            inputR1 == checkR1 &&
+                            inputR2 == checkR2)
                         {
-                            return growFunction[9];
+                            return successResult;
                         }
 
                         return '.';
@@ -54,7 +59,7 @@ namespace part2
 
             var currentState = initialState;
             var lastPercentage = 0.0;
-            const long totalGenerations = 5000000;//50000000000;
+            const long totalGenerations = 50000000;//50000000000;
             for (long generation = 0; generation < totalGenerations; generation++)
             {
                 var localState = currentState;
@@ -90,6 +95,7 @@ namespace part2
             var sumOfPotsWithPlants = CountPotsWithPlants(currentState, stateOffset);
 
             Console.WriteLine($"The answer is {sumOfPotsWithPlants}");
+            Console.ReadLine();
         }
 
         private static long CountPotsWithPlants(string state, int stateOffset)
