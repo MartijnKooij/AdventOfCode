@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
-using System.Linq;
+using System.Threading.Tasks;
 
-namespace part1
+namespace part2
 {
     class Program
     {
@@ -11,13 +12,31 @@ namespace part1
         {
             var input = File.ReadAllLines("input.txt");
             var initialState = input[0].Split(':')[1].Trim();
-            var states = new List<string>();
-            var growFunctions = new List<GrowFunction>();
+            var growFunctionList = new List<Func<char, char, char, char, char, char>>();
 
             for (int g = 2; g < input.Length; g++)
             {
-                growFunctions.Add(new GrowFunction(input[g]));
+                var growFunction = input[g];
+
+                growFunctionList.Add(
+                    (inputL1, inputL2, inputC, inputR1, inputR2) =>
+                    {
+                        if (inputL1 == growFunction[0] &&
+                            inputL2 == growFunction[1] &&
+                            inputC == growFunction[2] &&
+                            inputR1 == growFunction[3] &&
+                            inputR2 == growFunction[4])
+                        {
+                            return growFunction[9];
+                        }
+
+                        return '.';
+                    }
+                    );
             }
+
+            var growFunctions = growFunctionList.ToImmutableArray();
+            var growFunctionCount = growFunctions.Length;
 
             var stateOffset = 0;
 
@@ -31,19 +50,29 @@ namespace part1
                 initialState += ".";
             }
 
-            states.Add(initialState);
             Console.WriteLine($"State at generation {00}: {initialState}");
-            for (int generation = 0; generation < 20; generation++)
-            {
-                var currentState = states[generation];
-                var newState = "";
 
-                for (int stateIndex = 0; stateIndex < currentState.Length; stateIndex++)
+            var currentState = initialState;
+            var lastPercentage = 0.0;
+            const long totalGenerations = 20;
+            for (long generation = 0; generation < totalGenerations; generation++)
+            {
+                var localState = currentState;
+                char[] localNewState = new char[localState.Length];
+                Parallel.For(0, currentState.Length, (stateIndex, state) => 
                 {
-                    char growResult = GetGrowResult(growFunctions, currentState, stateIndex);
+                    char growResult = GetGrowResult(growFunctions, growFunctionCount, localState, stateIndex);
+
+                    localNewState[stateIndex] = growResult;
+                });
+                var newState = new string(localNewState);
+
+                /*for (int stateIndex = 0; stateIndex < currentState.Length; stateIndex++)
+                {
+                    char growResult = GetGrowResult(growFunctions, growFunctionCount, currentState, stateIndex);
 
                     newState += growResult;
-                }
+                }*/
 
                 if (!newState.StartsWith("."))
                 {
@@ -54,16 +83,23 @@ namespace part1
                 {
                     newState += ".";
                 }
-                states.Add(newState);
-                Console.WriteLine($"State at generation {(generation + 1 < 10 ? "0" : "")}{generation + 1}: {newState}");
+
+                currentState = newState;
+
+                var percentage = Math.Round(generation / (double)totalGenerations * 100.0, 3);
+                if (percentage > lastPercentage)
+                {
+                    Console.WriteLine($"{percentage} done ({generation} of {totalGenerations})");
+                    lastPercentage = percentage;
+                }
             }
 
-            int sumOfPotsWithPlants = CountPotsWithPlants(states[20], stateOffset);
+            var sumOfPotsWithPlants = CountPotsWithPlants(currentState, stateOffset);
 
             Console.WriteLine($"The answer is {sumOfPotsWithPlants}");
         }
 
-        private static int CountPotsWithPlants(string state, int stateOffset)
+        private static long CountPotsWithPlants(string state, int stateOffset)
         {
             var sumOfPotsWithPlants = 0;
             for (int stateIndex = 0; stateIndex < state.Length; stateIndex++)
@@ -77,7 +113,12 @@ namespace part1
             return sumOfPotsWithPlants;
         }
 
-        private static char GetGrowResult(List<GrowFunction> growFunctions, string currentState, int stateIndex)
+        private static char GetGrowResult(
+            ImmutableArray<Func<char, char, char, char, char, char>> growFunctions,
+            int growFunctionCount,
+            string currentState,
+            int stateIndex
+            )
         {
             var growResult = '.';
 
@@ -105,9 +146,9 @@ namespace part1
                 r2 = currentState[stateIndex + 2];
             }
 
-            foreach (var growFunction in growFunctions)
+            for (var gf = 0; gf < growFunctionCount; gf++)
             {
-                growResult = growFunction.GetState(l1, l2, c, r1, r2);
+                growResult = growFunctions[gf](l1, l2, c, r1, r2);
 
                 if (growResult == '#')
                 {
@@ -117,28 +158,5 @@ namespace part1
 
             return growResult;
         }
-    }
-
-    class GrowFunction
-    {
-        public Func<char, char, char, char, char, char> GetState { get; }
-
-        public GrowFunction(string growFunction)
-        {
-            GetState = (inputL1, inputL2, inputC, inputR1, inputR2) =>
-            {
-                if (inputL1 == growFunction[0] &&
-                    inputL2 == growFunction[1] &&
-                    inputC == growFunction[2] &&
-                    inputR1 == growFunction[3] &&
-                    inputR2 == growFunction[4])
-                {
-                    return growFunction[9];
-                }
-
-                return '.';
-            };
-        }
-
     }
 }

@@ -54,7 +54,7 @@ namespace part2
 
             var currentState = initialState;
             var lastPercentage = 0.0;
-            const long totalGenerations = 50000000;//50000000000;
+            const long totalGenerations = 5000000;//50000000000;
             for (long generation = 0; generation < totalGenerations; generation++)
             {
                 var localState = currentState;
@@ -66,13 +66,6 @@ namespace part2
                     localNewState[stateIndex] = growResult;
                 });
                 var newState = new string(localNewState);
-
-                /*for (int stateIndex = 0; stateIndex < currentState.Length; stateIndex++)
-                {
-                    char growResult = GetGrowResult(growFunctions, growFunctionCount, currentState, stateIndex);
-
-                    newState += growResult;
-                }*/
 
                 if (!newState.StartsWith("."))
                 {
