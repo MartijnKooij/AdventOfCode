@@ -2,108 +2,90 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace part2
 {
-    class Program
+    public static class Program
     {
-        static void Main()
+        public static void Main()
         {
             var input = File.ReadAllLines("input.txt");
-            var initialState = input[0].Split(':')[1].Trim();
-            var growFunctionList = new List<Func<char, char, char, char, char, char>>();
 
-            for (int g = 2; g < input.Length; g++)
+            var initialStateValue = input[0].Split(':')[1].Trim();
+            var initialStateList = new List<bool>();
+            foreach (var stateValue in initialStateValue)
             {
-                var checkL1 = input[g][0];
-                var checkL2 = input[g][1];
-                var checkC = input[g][2];
-                var checkR1 = input[g][3];
-                var checkR2 = input[g][4];
-                var successResult = input[g][9];
-
-                growFunctionList.Add(
-                    (inputL1, inputL2, inputC, inputR1, inputR2) =>
-                    {
-                        if (inputL1 == checkL1 &&
-                            inputL2 == checkL2 &&
-                            inputC == checkC &&
-                            inputR1 == checkR1 &&
-                            inputR2 == checkR2)
-                        {
-                            return successResult;
-                        }
-
-                        return '.';
-                    }
-                    );
+                initialStateList.Add(stateValue == '#');
             }
+            var initialState = initialStateList.ToArray();
 
-            var growFunctions = growFunctionList.ToImmutableArray();
-            var growFunctionCount = growFunctions.Length;
+            var growFunctions = ParseGrowFunctions(input);
 
             var stateOffset = 0;
 
-            if (!initialState.StartsWith("."))
-            {
-                initialState = "." + initialState;
-                stateOffset++;
-            }
-            if (!initialState.EndsWith("."))
-            {
-                initialState += ".";
-            }
+            initialState = PadState(initialState, ref stateOffset);
 
             Console.WriteLine($"State at generation {00}: {initialState}");
 
             var currentState = initialState;
+
             var lastPercentage = 0.0;
-            const long totalGenerations = 50000000;//50000000000;
+            const long totalGenerations = 5000000;//50000000000;
             for (long generation = 0; generation < totalGenerations; generation++)
             {
-                var localState = currentState;
-                char[] localNewState = new char[localState.Length];
-                Parallel.For(0, currentState.Length, (stateIndex, state) => 
-                {
-                    char growResult = GetGrowResult(growFunctions, growFunctionCount, localState, stateIndex);
+                var newState = ComputeState(currentState, growFunctions);
 
-                    localNewState[stateIndex] = growResult;
-                });
-                var newState = new string(localNewState);
-
-                if (!newState.StartsWith("."))
-                {
-                    newState = "." + newState;
-                    stateOffset++;
-                }
-                if (!newState.EndsWith("."))
-                {
-                    newState += ".";
-                }
+                newState = PadState(newState, ref stateOffset);
 
                 currentState = newState;
 
-                var percentage = Math.Round(generation / (double)totalGenerations * 100.0, 3);
-                if (percentage > lastPercentage)
-                {
-                    Console.WriteLine($"{percentage} done ({generation} of {totalGenerations})");
-                    lastPercentage = percentage;
-                }
+                ConsoleLogProgress(generation, totalGenerations, ref lastPercentage);
             }
 
             var sumOfPotsWithPlants = CountPotsWithPlants(currentState, stateOffset);
 
             Console.WriteLine($"The answer is {sumOfPotsWithPlants}");
+
             Console.ReadLine();
         }
 
-        private static long CountPotsWithPlants(string state, int stateOffset)
+        private static ImmutableArray<GrowFunction> ParseGrowFunctions(IReadOnlyList<string> input)
+        {
+            var growFunctionList = new List<GrowFunction>();
+
+            for (int g = 2; g < input.Count; g++)
+            {
+                growFunctionList.Add(
+                    new GrowFunction(input[g][0], input[g][1], input[g][2], input[g][3], input[g][4], input[g][9])
+                );
+            }
+
+            var growFunctions = growFunctionList.ToImmutableArray();
+            return growFunctions;
+        }
+
+        private static bool[] ComputeState(IReadOnlyList<bool> currentState, ImmutableArray<GrowFunction> growFunctions)
+        {
+            bool[] localState = new bool[currentState.Count];
+
+            Parallel.For(0, currentState.Count, (stateIndex, state) =>
+            {
+                bool growResult = GetGrowResult(growFunctions, currentState, stateIndex);
+
+                localState[stateIndex] = growResult;
+            });
+
+            return localState;
+        }
+
+        private static long CountPotsWithPlants(IReadOnlyList<bool> state, int stateOffset)
         {
             var sumOfPotsWithPlants = 0;
-            for (int stateIndex = 0; stateIndex < state.Length; stateIndex++)
+            for (int stateIndex = 0; stateIndex < state.Count; stateIndex++)
             {
-                if (state[stateIndex] == '#')
+                if (state[stateIndex])
                 {
                     sumOfPotsWithPlants += stateIndex - stateOffset;
                 }
@@ -112,50 +94,93 @@ namespace part2
             return sumOfPotsWithPlants;
         }
 
-        private static char GetGrowResult(
-            ImmutableArray<Func<char, char, char, char, char, char>> growFunctions,
-            int growFunctionCount,
-            string currentState,
+        private static bool GetGrowResult(
+            ImmutableArray<GrowFunction> growFunctions,
+            IReadOnlyList<bool> currentState,
             int stateIndex
             )
         {
-            var growResult = '.';
-
-            var l1 = '.';
+            var check = new bool[5];
             if (stateIndex >= 2)
             {
-                l1 = currentState[stateIndex - 2];
+                check[0] = currentState[stateIndex - 2];
             }
-            var l2 = '.';
             if (stateIndex >= 1)
             {
-                l2 = currentState[stateIndex - 1];
+                check[1] = currentState[stateIndex - 1];
             }
 
-            var c = currentState[stateIndex];
+            check[2] = currentState[stateIndex];
 
-            var r1 = '.';
-            if (stateIndex <= currentState.Length - 2)
+            if (stateIndex <= currentState.Count - 2)
             {
-                r1 = currentState[stateIndex + 1];
+                check[3] = currentState[stateIndex + 1];
             }
-            var r2 = '.';
-            if (stateIndex <= currentState.Length - 3)
+            if (stateIndex <= currentState.Count - 3)
             {
-                r2 = currentState[stateIndex + 2];
+                check[4] = currentState[stateIndex + 2];
             }
 
-            for (var gf = 0; gf < growFunctionCount; gf++)
-            {
-                growResult = growFunctions[gf](l1, l2, c, r1, r2);
+            return growFunctions.Any(growFunction => growFunction.Check(check));
+        }
 
-                if (growResult == '#')
+        private static bool[] PadState(bool[] state, ref int stateOffset)
+        {
+            if (state[0])
+            {
+                var tempState = state.ToList();
+                tempState.Insert(0, false);
+                state = tempState.ToArray();
+                stateOffset++;
+            }
+
+            if (state[state.Length-1])
+            {
+                var tempState = state.ToList();
+                tempState.Add(false);
+                state = tempState.ToArray();
+            }
+
+            return state;
+        }
+
+        private static void ConsoleLogProgress(long generation, long totalGenerations, ref double lastPercentage)
+        {
+            var percentage = Math.Round(generation / (double)totalGenerations * 100.0, 2);
+            if (!(percentage > lastPercentage))
+            {
+                return;
+            }
+
+            Console.WriteLine($"{percentage} done ({generation} of {totalGenerations})");
+            lastPercentage = percentage;
+        }
+    }
+
+    public class GrowFunction
+    {
+        private readonly bool[] input;
+
+        private readonly bool successResult;
+
+        public bool Check(bool[] check)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                if (check[i] != input[i])
                 {
-                    break;
+                    return false;
                 }
             }
 
-            return growResult;
+            return successResult;
+        }
+
+        public GrowFunction(char inputL1, char inputL2, char inputC, char inputR1, char inputR2, char successResult)
+        {
+            input = new[] {inputL1 == '#', inputL2 == '#', inputC == '#', inputR1 == '#', inputR2 == '#' };
+
+            this.successResult = successResult == '#';
         }
     }
 }
