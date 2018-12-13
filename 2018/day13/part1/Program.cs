@@ -15,19 +15,31 @@ namespace part1
 
             var moving = true;
             var lastPosition = new Point(-1, -1);
-            while (true)
+
+            while (moving)
             {
+                var skipTracks = new List<TrackNode>();
                 foreach (var trackNode in trackNodes)
                 {
-                    if (trackNode.HasCart)
+                    if (skipTracks.Contains(trackNode))
                     {
-                        if (!trackNode.MoveCart(trackNodes))
-                        {
-                            lastPosition = trackNode.Position;
-                            moving = false;
-                            break;
-                        }
+                        continue;
                     }
+                    if (!trackNode.HasCart)
+                    {
+                        continue;
+                    }
+
+                    var nextTrack = trackNode.MoveCart(trackNodes);
+                    Console.WriteLine($"{} > {JSON.SnextTrack}")
+                    if (nextTrack.HasCrashed)
+                    {
+                        lastPosition = trackNode.Position;
+                        moving = false;
+                        break;
+                    }
+                    skipTracks.Add(nextTrack);
+
                 }
             }
 
@@ -63,24 +75,26 @@ namespace part1
 
         public Cart Cart { get; private set; }
         public Point Position { get; }
-        public bool HasCart => Cart.CartDirection != ' ';
+        public bool HasCart => Cart.Direction != ' ';
 
-        public bool MoveCart(List<TrackNode> trackNodes)
+        public bool HasCrashed { get; private set; }
+
+        public TrackNode MoveCart(List<TrackNode> trackNodes)
         {
             TrackNode nextTrack = null;
-            if (Cart.CartDirection == '>')
+            if (Cart.Direction == '>')
             {
                 nextTrack = trackNodes.First(x => x.Position.X == this.Position.X + 1 && x.Position.Y == this.Position.Y);
             }
-            if (Cart.CartDirection == '<')
+            if (Cart.Direction == '<')
             {
                 nextTrack = trackNodes.First(x => x.Position.X == this.Position.X - 1 && x.Position.Y == this.Position.Y);
             }
-            if (Cart.CartDirection == 'v')
+            if (Cart.Direction == 'v')
             {
                 nextTrack = trackNodes.First(x => x.Position.X == this.Position.X && x.Position.Y == this.Position.Y + 1);
             }
-            if (Cart.CartDirection == '^')
+            if (Cart.Direction == '^')
             {
                 nextTrack = trackNodes.First(x => x.Position.X == this.Position.X && x.Position.Y == this.Position.Y - 1);
             }
@@ -88,36 +102,53 @@ namespace part1
             if (nextTrack.HasCart)
             {
                 //BOOM!
-                return false;
+                nextTrack.HasCrashed = true;
+                return nextTrack;
             }
 
             nextTrack.SetCart(this.Cart);
-            this.Cart.CartDirection = ' ';
-            this.Cart.NextMove = "Left";
+            this.Cart.Direction = ' ';
 
-            return true;
+            return nextTrack;
         }
 
-        private void SetCart(char cart)
+        private void SetCart(Cart cart)
         {
             if (this.Direction == '+')
             {
-
+                this.Cart.TakeTurn();
             }
-
+            if (this.Direction == '/')
+            {
+                if (cart.Direction == '>') this.Cart.Direction = '^';
+                if (cart.Direction == '<') this.Cart.Direction = '<';
+                if (cart.Direction == '^') this.Cart.Direction = '>';
+                if (cart.Direction == 'v') this.Cart.Direction = '<';
+            }
+            else if (this.Direction == '\\')
+            {
+                if (cart.Direction == '>') this.Cart.Direction = 'v';
+                if (cart.Direction == '<') this.Cart.Direction = '^';
+                if (cart.Direction == '^') this.Cart.Direction = '<';
+                if (cart.Direction == 'v') this.Cart.Direction = '>';
+            }
+            else
+            {
+                this.Cart.Direction = cart.Direction;
+            }
         }
 
         public TrackNode(char direction, Point position)
         {
-            Cart = new Cart(' ', "Left");
+            Cart = new Cart(' ');
             if (direction == '>' || direction == '<')
             {
-                Cart.CartDirection = direction;
+                Cart.Direction = direction;
                 direction = '-';
             }
             if (direction == 'v' || direction == '^')
             {
-                Cart.CartDirection = direction;
+                Cart.Direction = direction;
                 direction = '|';
             }
 
@@ -128,15 +159,36 @@ namespace part1
 
     class Cart
     {
-        public char CartDirection { get; set; }
+        public char Direction { get; set; }
 
-        public string NextMove {get; set;}
+        private short move = -1;
 
-        public Cart(char cartDirection, string nextMove)
+        private char[] moves = new[] { '^', '>', 'v', '<' };
+
+        public void TakeTurn()
         {
-            CartDirection = cartDirection;
-            NextMove = nextMove;
+            var currentMove = -1;
+            for (int i = 0; i < moves.Length; i++)
+            {
+                char c = moves[i];
+                if (c == this.Direction)
+                {
+                    currentMove = i;
+                    break;
+                }
+            }
+            var newDirection = currentMove - this.move;
+            if (newDirection < 0) newDirection = 3;
+            if (newDirection > 3) newDirection = 0;
+
+            this.Direction = moves[newDirection];
+            this.move += 1;
+            if (this.move > 1) this.move = -1;
         }
 
+        public Cart(char cartDirection)
+        {
+            Direction = cartDirection;
+        }
     }
 }
