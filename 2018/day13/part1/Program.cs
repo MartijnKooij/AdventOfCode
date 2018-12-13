@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 
@@ -10,44 +9,76 @@ namespace part1
     {
         public static void Main()
         {
-            var lines = File.ReadAllLines("testinput.txt");
-            var trackNodes = ParseInput(lines);
+            var lines = File.ReadAllLines("input.txt");
 
-            var moving = true;
-            var lastPosition = new Point(-1, -1);
+            var grid = ParseGrid(lines);
+            var carts = ParseCarts(grid);
 
-            while (moving)
+            LogGrid(grid);
+            var hasCrashed = false;
+            while (!hasCrashed)
             {
-                var skipTracks = new List<TrackNode>();
-                foreach (var trackNode in trackNodes)
+                try
                 {
-                    if (skipTracks.Contains(trackNode))
-                    {
-                        continue;
-                    }
-                    if (!trackNode.HasCart)
-                    {
-                        continue;
-                    }
+                    grid = MoveCarts(carts, grid);
 
-                    var nextTrack = trackNode.MoveCart(trackNodes);
-                    if (nextTrack.HasCrashed)
-                    {
-                        lastPosition = trackNode.Position;
-                        moving = false;
-                        break;
-                    }
-                    skipTracks.Add(nextTrack);
+                    LogGrid(grid);                    
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    hasCrashed = true;
+                }
+            }
+        }
 
+        private static char[,] MoveCarts(List<Cart> carts, char[,] grid)
+        {
+            foreach (var cart in carts)
+            {
+                cart.Move(grid);
+                if (cart.MakeTurn(grid)) continue;
+
+                Console.WriteLine($"We have crashed at {cart.Position.X},{cart.Position.Y}");
+                throw new Exception("CRASH!");
+            }
+
+            return grid;
+        }
+
+        private static List<Cart> ParseCarts(char[,] grid)
+        {
+            var carts = new List<Cart>();
+            for (var y = 0; y < grid.GetLength(0); y++)
+            {
+                for (var x = 0; x < grid.GetLength(1); x++)
+                {
+                    var trackCharacter = grid[y, x];
+                    switch (trackCharacter)
+                    {
+                        case '^':
+                            carts.Add(new Cart(x, y, '^', '|', -1));
+                            break;
+                        case '>':
+                            carts.Add(new Cart(x, y, '>', '-', -1));
+                            break;
+                        case 'v':
+                            carts.Add(new Cart(x, y, 'v', '|', -1));
+                            break;
+                        case '<':
+                            carts.Add(new Cart(x, y, '<', '-', -1));
+                            break;
+                    }
                 }
             }
 
-            Console.WriteLine($"The answer is {lastPosition.X},{lastPosition.Y}");
+            return carts;
         }
 
-        private static List<TrackNode> ParseInput(string[] lines)
+        private static char[,] ParseGrid(string[] lines)
         {
-            var trackNodes = new List<TrackNode>();
+            var grid = new char[lines.Length, lines[0].Length];
+
             for (var y = 0; y < lines.Length; y++)
             {
                 var line = lines[y];
@@ -58,149 +89,124 @@ namespace part1
                     {
                         continue;
                     }
-                    var trackNode = new TrackNode(trackCharacter, new Point(x, y));
 
-                    trackNodes.Add(trackNode);
+                    grid[y, x] = trackCharacter;
                 }
             }
 
-            return trackNodes;
+            return grid;
+        }
+
+        private static void LogGrid(char[,] grid)
+        {
+            var gridLog = string.Join("", grid.OfType<char>()
+                .Select((value, index) => new { value, index })
+                .GroupBy(x => x.index / grid.GetLength(1))
+                .Select(x => $"{string.Join("", x.Select(y => y.value))}" + Environment.NewLine));
+
+            Console.WriteLine(gridLog);
         }
     }
 
-    class TrackNode
-    {
-        public char Direction { get; }
-
-        public Cart Cart { get; set; }
-        public Point Position { get; }
-        public bool HasCart => Cart != null && Cart.Direction != ' ';
-
-        public bool HasCrashed { get; private set; }
-
-        public TrackNode MoveCart(List<TrackNode> trackNodes)
-        {
-            TrackNode nextTrack = null;
-            switch (Cart.Direction)
-            {
-                case '>':
-                    nextTrack = trackNodes.First(x => x.Position.X == Position.X + 1 && x.Position.Y == Position.Y);
-                    break;
-                case '<':
-                    nextTrack = trackNodes.First(x => x.Position.X == Position.X - 1 && x.Position.Y == Position.Y);
-                    break;
-                case 'v':
-                    nextTrack = trackNodes.First(x => x.Position.X == Position.X && x.Position.Y == Position.Y + 1);
-                    break;
-                case '^':
-                    nextTrack = trackNodes.First(x => x.Position.X == Position.X && x.Position.Y == Position.Y - 1);
-                    break;
-            }
-
-            if (nextTrack == null)
-            {
-                throw new InvalidOperationException("Where's my node?");
-            }
-
-            if (nextTrack.HasCart)
-            {
-                //BOOM!
-                nextTrack.HasCrashed = true;
-                return nextTrack;
-            }
-
-            nextTrack.SetCart(Cart);
-            Cart.Direction = ' ';
-
-            return nextTrack;
-        }
-
-        private void SetCart(Cart cart)
-        {
-            Cart = cart;
-
-            if (Direction == '+')
-            {
-                Cart.TakeTurn(cart.Direction);
-            }
-            switch (Direction)
-            {
-                case '/':
-                {
-                    switch (cart.Direction)
-                    {
-                        case '>':
-                            Cart.Direction = '^';
-                            break;
-                        case '<':
-                            Cart.Direction = '<';
-                            break;
-                        case '^':
-                            Cart.Direction = '>';
-                            break;
-                        case 'v':
-                            Cart.Direction = '<';
-                            break;
-                    }
-
-                    break;
-                }
-                case '\\':
-                {
-                    switch (cart.Direction)
-                    {
-                        case '>':
-                            Cart.Direction = 'v';
-                            break;
-                        case '<':
-                            Cart.Direction = '^';
-                            break;
-                        case '^':
-                            Cart.Direction = '<';
-                            break;
-                        case 'v':
-                            Cart.Direction = '>';
-                            break;
-                    }
-
-                    break;
-                }
-                default:
-                    Cart.Direction = cart.Direction;
-                    break;
-            }
-        }
-
-        public TrackNode(char direction, Point position)
-        {
-            if (direction == '>' || direction == '<')
-            {
-                Cart = new Cart(direction);
-                direction = '-';
-            }
-            if (direction == 'v' || direction == '^')
-            {
-                Cart = new Cart(direction);
-                direction = '|';
-            }
-
-            Direction = direction;
-            Position = position;
-        }
-    }
-
-    class Cart
+    public class Cart
     {
         public char Direction { get; set; }
+        public char TrackBelow { get; set; }
+        public Point Position { get; set; }
+        public int Turn { get; set; }
 
-        private short move = -1;
-
-        private readonly char[] moves = { '^', '<', 'v', '>' };
-
-        public void TakeTurn(char cartDirection)
+        public void Move(char[,] grid)
         {
-            Direction = cartDirection;
+            grid[Position.Y, Position.X] = TrackBelow;
 
+            switch (Direction)
+            {
+                case '^':
+                    Position.Y = Position.Y - 1;
+                    break;
+                case '>':
+                    Position.X = Position.X + 1;
+                    break;
+                case 'v':
+                    Position.Y = Position.Y + 1;
+                    break;
+                case '<':
+                    Position.X = Position.X - 1;
+                    break;
+            }
+
+            TrackBelow = grid[Position.Y, Position.X];
+            grid[Position.Y, Position.X] = Direction;
+        }
+
+        internal bool MakeTurn(char[,] grid)
+        {
+            switch (TrackBelow)
+            {
+                case '<':
+                case '>':
+                case '^':
+                case 'v':
+                    //BOOM!
+                    return false;
+                case '|':
+                case '-':
+                    return true;
+                case '+':
+                    MakeTurn();
+                    break;
+                case '\\':
+                    MakeTurnForBackwardSlash();
+                    break;
+                case '/':
+                    MakeTurnForForwardSlash();
+                    break;
+            }
+
+            return true;
+        }
+
+        private void MakeTurnForBackwardSlash()
+        {
+            switch (Direction)
+            {
+                case '>':
+                    Direction = 'v';
+                    break;
+                case '<':
+                    Direction = '^';
+                    break;
+                case '^':
+                    Direction = '<';
+                    break;
+                case 'v':
+                    Direction = '>';
+                    break;
+            }
+        }
+
+        private void MakeTurnForForwardSlash()
+        {
+            switch (Direction)
+            {
+                case '>':
+                    Direction = '^';
+                    break;
+                case '<':
+                    Direction = 'v';
+                    break;
+                case '^':
+                    Direction = '>';
+                    break;
+                case 'v':
+                    Direction = '<';
+                    break;
+            }
+        }
+
+        private void MakeTurn()
+        {
+            var moves = new[] {'^', '<', 'v', '>'};
             var currentMove = -1;
             for (var i = 0; i < moves.Length; i++)
             {
@@ -209,18 +215,28 @@ namespace part1
                 currentMove = i;
                 break;
             }
-            var newDirection = currentMove - move;
+
+            var newDirection = currentMove - Turn;
             if (newDirection < 0) newDirection = 3;
             if (newDirection > 3) newDirection = 0;
 
             Direction = moves[newDirection];
-            move += 1;
-            if (move > 1) move = -1;
+            Turn += 1;
+            if (Turn > 1) Turn = -1;
         }
 
-        public Cart(char cartDirection)
+        public Cart(int x, int y, char direction, char trackBelow, int turn)
         {
-            Direction = cartDirection;
+            Position = new Point {X = x, Y = y};
+            Direction = direction;
+            TrackBelow = trackBelow;
+            Turn = turn;
         }
+    }
+
+    public class Point
+    {
+        public int X { get; set; }
+        public int Y { get; set; }
     }
 }
