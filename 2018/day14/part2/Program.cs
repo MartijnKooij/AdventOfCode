@@ -10,6 +10,7 @@ namespace part1
         {
             var recipes = new List<int> { 3, 7 };
             var totalRecipes = "37";
+            const string searchingRecipe = "825401";
             var elf1Index = 0;
             var elf2Index = 1;
 
@@ -22,6 +23,7 @@ namespace part1
                 var digits = GetDigits(sum);
 
                 totalRecipes += sum.ToString();
+                totalRecipes = totalRecipes.Substring(Math.Max(totalRecipes.Length - 30, 0));
                 recipes.AddRange(digits);
 
                 elf1Index = (elf1Index + recipes[elf1Index] + 1) % recipes.Count;
@@ -29,8 +31,10 @@ namespace part1
 
                 //Console.WriteLine(string.Join(" ", recipes));
 
-                if (totalRecipes.Contains("825401")) {
-                    Console.WriteLine($"The answer is {totalRecipes} {totalRecipes.IndexOf("825401")}");
+                if (totalRecipes.Contains(searchingRecipe))
+                {
+                    totalRecipes = string.Join("", recipes);
+                    Console.WriteLine($"The answer is {totalRecipes} {totalRecipes.IndexOf(searchingRecipe)}");
                     break;
                 }
             }
