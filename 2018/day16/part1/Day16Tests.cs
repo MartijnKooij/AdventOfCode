@@ -166,5 +166,70 @@ namespace part1
             Assert.Equal(expectedOutput, actualOutput);
         }
 
+        [Fact]
+        public void GreaterThanImmediateRegister_IsFalse()
+        {
+            var input = new[] { 1, 2, 3, 4 };
+            var expectedOutput = new[] { 1, 2, 3, 0 };
+
+            var actualOutput = challenge.GreaterThanImmediateRegister(input);
+
+            Assert.Equal(expectedOutput, actualOutput);
+        }
+
+        [Fact]
+        public void GreaterThanImmediateRegister_IsTrue()
+        {
+            var input = new[] { 1, 2, 3, 1 };
+            var expectedOutput = new[] { 1, 2, 3, 1 };
+
+            var actualOutput = challenge.GreaterThanImmediateRegister(input);
+
+            Assert.Equal(expectedOutput, actualOutput);
+        }
+
+        [Fact]
+        public void GreaterThanRegisterImmediate_IsFalse()
+        {
+            var input = new[] { 1, 3, 4, 1 };
+            var expectedOutput = new[] { 1, 3, 4, 0 };
+
+            var actualOutput = challenge.GreaterThanRegisterImmediate(input);
+
+            Assert.Equal(expectedOutput, actualOutput);
+        }
+
+        [Fact]
+        public void GreaterThanRegisterImmediate_IsTrue()
+        {
+            var input = new[] { 1, 3, 0, 1 };
+            var expectedOutput = new[] { 1, 3, 0, 1 };
+
+            var actualOutput = challenge.GreaterThanRegisterImmediate(input);
+
+            Assert.Equal(expectedOutput, actualOutput);
+        }
+
+        [Fact]
+        public void GreaterThanRegisterRegister_IsFalse()
+        {
+            var input = new[] { 1, 1, 2, 1 };
+            var expectedOutput = new[] { 1, 1, 2, 0 };
+
+            var actualOutput = challenge.GreaterThanRegisterRegister(input);
+
+            Assert.Equal(expectedOutput, actualOutput);
+        }
+
+        [Fact]
+        public void GreaterThanRegisterRegister_IsTrue()
+        {
+            var input = new[] { 1, 3, 2, 3 };
+            var expectedOutput = new[] { 1, 3, 2, 1 };
+
+            var actualOutput = challenge.GreaterThanRegisterRegister(input);
+
+            Assert.Equal(expectedOutput, actualOutput);
+        }
     }
 }

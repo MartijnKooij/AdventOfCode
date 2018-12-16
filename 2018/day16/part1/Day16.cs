@@ -132,5 +132,26 @@ namespace part1
 
             return BuildOperationResult(input, operationResult);
         }
+
+        public IEnumerable<int> GreaterThanImmediateRegister(int[] input)
+        {
+            var operationResult = input[1] > input[input[2]] ? 1 : 0;
+
+            return BuildOperationResult(input, operationResult);
+        }
+
+        public IEnumerable<int> GreaterThanRegisterImmediate(int[] input)
+        {
+            var operationResult = input[input[1]] > input[2] ? 1 : 0;
+
+            return BuildOperationResult(input, operationResult);
+        }
+
+        public IEnumerable<int> GreaterThanRegisterRegister(int[] input)
+        {
+            var operationResult = input[input[1]] > input[input[2]] ? 1 : 0;
+
+            return BuildOperationResult(input, operationResult);
+        }
     }
 }
