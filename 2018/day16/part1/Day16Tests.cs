@@ -16,7 +16,7 @@ namespace part1
         [Fact]
         public void ParsesSingleInput()
         {
-            var testData = challenge.ParseInput(new[] {
+            var testData = challenge.ParseTestData(new[] {
                 "Before: [0, 3, 3, 0]", "5 0 2 1", "After:  [0, 0, 3, 0]"});
 
             Assert.Single(testData);
@@ -28,7 +28,7 @@ namespace part1
         [Fact]
         public void ParsesMultipleInputs()
         {
-            var testData = challenge.ParseInput(new[] {
+            var testData = challenge.ParseTestData(new[] {
                 "Before: [0, 3, 3, 0]", "5 0 2 1", "After:  [0, 0, 3, 0]",
                 "",
                 "Before: [2, 2, 1, 0]", "3 0 2 3", "After:  [2, 2, 1, 4]"
@@ -46,7 +46,7 @@ namespace part1
         [Fact]
         public void ParseShouldStopAfterDoubleNewLine()
         {
-            var testData = challenge.ParseInput(new[] {
+            var testData = challenge.ParseTestData(new[] {
                 "Before: [0, 3, 3, 0]", "5 0 2 1", "After:  [0, 0, 3, 0]",
                 "",
                 "Before: [2, 2, 1, 0]", "3 0 2 3", "After:  [2, 2, 1, 4]",
@@ -253,7 +253,7 @@ namespace part1
         [Fact]
         public void GetPossibleOpCodesForTestData()
         {
-            var testData = challenge.ParseInput(new[]
+            var testData = challenge.ParseTestData(new[]
             {
                 "Before: [3, 2, 1, 1]", "9 2 1 2", "After:  [3, 2, 2, 1]",
                 "",
@@ -272,12 +272,34 @@ namespace part1
         public void GetPossibleOpCodesForTestData_Part1()
         {
             var lines = File.ReadAllLines("input.txt");
-            var testData = challenge.ParseInput(lines);
+            var testData = challenge.ParseTestData(lines);
 
             var possibleOpCodes = challenge.GetPossibleOpCodes(testData);
 
             Assert.Equal(824, possibleOpCodes.Count);
             Assert.Equal(500, possibleOpCodes.Count(x => x.Value >= 3));
         }
+
+        [Fact]
+        public void GetLikelyOpCodesForTestData()
+        {
+            var lines = File.ReadAllLines("input.txt");
+            var testData = challenge.ParseTestData(lines);
+
+            var likelyOpCodes = challenge.GetLikelyOpCodes(testData);
+
+            Assert.Equal(16, likelyOpCodes.Count);
+            Assert.Equal(500, likelyOpCodes.Count(x => x.Occurences == 1));
+        }
+
+        [Fact]
+        public void ParseTestInput()
+        {
+            var lines = File.ReadAllLines("input.txt");
+            var testInput = challenge.ParseTestInput(lines);
+
+            Assert.Equal(876, testInput.Count);
+        }
+
     }
 }

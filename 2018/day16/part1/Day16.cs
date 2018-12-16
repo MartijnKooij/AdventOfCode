@@ -7,7 +7,7 @@ namespace part1
     public class Day16
     {
 
-        public List<TestData> ParseInput(string[] lines)
+        public List<TestData> ParseTestData(IEnumerable<string> lines)
         {
             var testData = new List<TestData>{
                 new TestData()
@@ -60,28 +60,17 @@ namespace part1
             return testData;
         }
 
+        public List<int[]> ParseTestInput(IEnumerable<string> lines)
+        {
+            return (from line in lines.Skip(3298)
+                where !string.IsNullOrEmpty(line)
+                select line.Split(" ")
+                    .Select(x => int.Parse(x.Trim()))
+                    .ToArray()).ToList();
+        }
+
         public Dictionary<int, int> GetPossibleOpCodes(List<TestData> testData)
         {
-            var operations = new List<Func<int[], int[], int[]>>
-            {
-                AddRegister,
-                AddImmediate,
-                MultiplyRegister,
-                MultiplyImmediate,
-                BitwiseAndRegister,
-                BitwiseAndImmediate,
-                BitwiseOrRegister,
-                BitwiseOrImmediate,
-                SetRegister,
-                SetImmediate,
-                GreaterThanImmediateRegister,
-                GreaterThanRegisterImmediate,
-                GreaterThanRegisterRegister,
-                EqualImmediateRegister,
-                EqualRegisterImmediate,
-                EqualRegisterRegister
-            };
-
             var possibleOpCodes = new Dictionary<int, int>();
 
             for (var testDataIndex = 0; testDataIndex < testData.Count; testDataIndex++)
@@ -89,7 +78,7 @@ namespace part1
                 possibleOpCodes.Add(testDataIndex, 0);
 
                 var data = testData[testDataIndex];
-                foreach (var operation in operations)
+                foreach (var operation in Operations)
                 {
                     var actualOutput = operation(data.Input, data.Instructions);
 
@@ -104,6 +93,76 @@ namespace part1
             }
 
             return possibleOpCodes;
+        }
+
+        public List<OpCode> GetLikelyOpCodes(List<TestData> testData)
+        {
+            var likelyOpCodes = new List<OpCode>();
+
+            foreach (var data in testData)
+            {
+                for (var operationIndex = 0; operationIndex < Operations.Count; operationIndex++)
+                {
+                    var operation = Operations[operationIndex];
+                    var actualOutput = operation(data.Input, data.Instructions);
+
+                    if (actualOutput[0] == data.Output[0] &&
+                        actualOutput[1] == data.Output[1] &&
+                        actualOutput[2] == data.Output[2] &&
+                        actualOutput[3] == data.Output[3])
+                    {
+                        likelyOpCodes.Add(new OpCode
+                        {
+                            OperationIndex = operationIndex,
+                            OperationCode = data.Instructions[0]
+                        });
+                    }
+                }
+            }
+
+            var groupedOpCodes =
+                from likelyOpCode in likelyOpCodes
+                group likelyOpCode by new
+                {
+                    likelyOpCode.OperationCode,
+                    likelyOpCode.OperationIndex
+                }
+                into groupedLikelyOpCodes
+                select new OpCode
+                {
+                    OperationCode = groupedLikelyOpCodes.Key.OperationCode,
+                    OperationIndex = groupedLikelyOpCodes.Key.OperationIndex,
+                    Occurences = groupedLikelyOpCodes.Count()
+                };
+
+            return groupedOpCodes.ToList();
+        }
+
+        private List<Func<int[], int[], int[]>> Operations
+        {
+            get
+            {
+                var operations = new List<Func<int[], int[], int[]>>
+                {
+                    AddRegister,
+                    AddImmediate,
+                    MultiplyRegister,
+                    MultiplyImmediate,
+                    BitwiseAndRegister,
+                    BitwiseAndImmediate,
+                    BitwiseOrRegister,
+                    BitwiseOrImmediate,
+                    SetRegister,
+                    SetImmediate,
+                    GreaterThanImmediateRegister,
+                    GreaterThanRegisterImmediate,
+                    GreaterThanRegisterRegister,
+                    EqualImmediateRegister,
+                    EqualRegisterImmediate,
+                    EqualRegisterRegister
+                };
+                return operations;
+            }
         }
 
         public int[] AddRegister(int[] input, int[] instructions)
