@@ -1,3 +1,5 @@
+using System.IO;
+using System.Linq;
 using Xunit;
 
 namespace part1
@@ -18,9 +20,9 @@ namespace part1
                 "Before: [0, 3, 3, 0]", "5 0 2 1", "After:  [0, 0, 3, 0]"});
 
             Assert.Single(testData);
-            Assert.Equal(new[] { 0, 3, 3, 0 }, testData[0].Inputs);
+            Assert.Equal(new[] { 0, 3, 3, 0 }, testData[0].Input);
             Assert.Equal(new[] { 5, 0, 2, 1 }, testData[0].Instructions);
-            Assert.Equal(new[] { 0, 0, 3, 0 }, testData[0].Outputs);
+            Assert.Equal(new[] { 0, 0, 3, 0 }, testData[0].Output);
         }
 
         [Fact]
@@ -33,12 +35,12 @@ namespace part1
                 });
 
             Assert.Equal(2, testData.Count);
-            Assert.Equal(new[] { 0, 3, 3, 0 }, testData[0].Inputs);
+            Assert.Equal(new[] { 0, 3, 3, 0 }, testData[0].Input);
             Assert.Equal(new[] { 5, 0, 2, 1 }, testData[0].Instructions);
-            Assert.Equal(new[] { 0, 0, 3, 0 }, testData[0].Outputs);
-            Assert.Equal(new[] { 2, 2, 1, 0 }, testData[1].Inputs);
+            Assert.Equal(new[] { 0, 0, 3, 0 }, testData[0].Output);
+            Assert.Equal(new[] { 2, 2, 1, 0 }, testData[1].Input);
             Assert.Equal(new[] { 3, 0, 2, 3 }, testData[1].Instructions);
-            Assert.Equal(new[] { 2, 2, 1, 4 }, testData[1].Outputs);
+            Assert.Equal(new[] { 2, 2, 1, 4 }, testData[1].Output);
         }
 
         [Fact]
@@ -60,9 +62,10 @@ namespace part1
         public void AddRegister()
         {
             var input = new[] {1, 2, 3, 4};
-            var expectedOutput = new[] {1, 2, 3, 7};
+            var instructions = new[] {0, 2, 3, 2};
+            var expectedOutput = new[] {1, 2, 7, 4};
 
-            var actualOutput = challenge.AddRegister(input);
+            var actualOutput = challenge.AddRegister(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
         }
@@ -71,9 +74,10 @@ namespace part1
         public void AddImmediate()
         {
             var input = new[] { 1, 2, 3, 4 };
-            var expectedOutput = new[] { 1, 2, 3, 6 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 6, 4 };
 
-            var actualOutput = challenge.AddImmediate(input);
+            var actualOutput = challenge.AddImmediate(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
         }
@@ -82,9 +86,10 @@ namespace part1
         public void MultiplyRegister()
         {
             var input = new[] { 1, 2, 3, 4 };
-            var expectedOutput = new[] { 1, 2, 3, 12 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 12, 4 };
 
-            var actualOutput = challenge.MultiplyRegister(input);
+            var actualOutput = challenge.MultiplyRegister(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
         }
@@ -93,9 +98,10 @@ namespace part1
         public void MultiplyImmediate()
         {
             var input = new[] { 1, 2, 3, 4 };
-            var expectedOutput = new[] { 1, 2, 3, 9 };
-    
-            var actualOutput = challenge.MultiplyImmediate(input);
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 9, 4 };
+
+            var actualOutput = challenge.MultiplyImmediate(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
         }
@@ -104,9 +110,10 @@ namespace part1
         public void BitwiseAndRegister()
         {
             var input = new[] { 1, 2, 3, 4 };
-            var expectedOutput = new[] { 1, 2, 3, 0 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 0, 4 };
 
-            var actualOutput = challenge.BitwiseAndRegister(input);
+            var actualOutput = challenge.BitwiseAndRegister(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
         }
@@ -115,9 +122,10 @@ namespace part1
         public void BitwiseAndImmediate()
         {
             var input = new[] { 1, 2, 3, 4 };
-            var expectedOutput = new[] { 1, 2, 3, 3 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 3, 4 };
 
-            var actualOutput = challenge.BitwiseAndImmediate(input);
+            var actualOutput = challenge.BitwiseAndImmediate(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
         }
@@ -126,9 +134,10 @@ namespace part1
         public void BitwiseOrRegister()
         {
             var input = new[] { 1, 2, 3, 4 };
-            var expectedOutput = new[] { 1, 2, 3, 7 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 7, 4 };
 
-            var actualOutput = challenge.BitwiseOrRegister(input);
+            var actualOutput = challenge.BitwiseOrRegister(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
         }
@@ -137,9 +146,10 @@ namespace part1
         public void BitwiseOrImmediate()
         {
             var input = new[] { 1, 2, 3, 4 };
-            var expectedOutput = new[] { 1, 2, 3, 3 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 3, 4 };
 
-            var actualOutput = challenge.BitwiseOrImmediate(input);
+            var actualOutput = challenge.BitwiseOrImmediate(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
         }
@@ -148,9 +158,10 @@ namespace part1
         public void SetRegister()
         {
             var input = new[] { 1, 2, 3, 4 };
-            var expectedOutput = new[] { 1, 2, 3, 3 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 3, 4 };
 
-            var actualOutput = challenge.SetRegister(input);
+            var actualOutput = challenge.SetRegister(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
         }
@@ -159,77 +170,114 @@ namespace part1
         public void SetImmediate()
         {
             var input = new[] { 1, 2, 3, 4 };
-            var expectedOutput = new[] { 1, 2, 3, 2 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 2, 4 };
 
-            var actualOutput = challenge.SetImmediate(input);
+            var actualOutput = challenge.SetImmediate(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
         }
 
         [Fact]
-        public void GreaterThanImmediateRegister_IsFalse()
+        public void GreaterThanImmediateRegister()
         {
             var input = new[] { 1, 2, 3, 4 };
-            var expectedOutput = new[] { 1, 2, 3, 0 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 0, 4 };
 
-            var actualOutput = challenge.GreaterThanImmediateRegister(input);
-
-            Assert.Equal(expectedOutput, actualOutput);
-        }
-
-        [Fact]
-        public void GreaterThanImmediateRegister_IsTrue()
-        {
-            var input = new[] { 1, 2, 3, 1 };
-            var expectedOutput = new[] { 1, 2, 3, 1 };
-
-            var actualOutput = challenge.GreaterThanImmediateRegister(input);
+            var actualOutput = challenge.GreaterThanImmediateRegister(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
         }
 
         [Fact]
-        public void GreaterThanRegisterImmediate_IsFalse()
+        public void GreaterThanRegisterImmediate()
         {
-            var input = new[] { 1, 3, 4, 1 };
-            var expectedOutput = new[] { 1, 3, 4, 0 };
+            var input = new[] { 1, 2, 3, 4 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 0, 4 };
 
-            var actualOutput = challenge.GreaterThanRegisterImmediate(input);
+            var actualOutput = challenge.GreaterThanRegisterImmediate(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
         }
 
         [Fact]
-        public void GreaterThanRegisterImmediate_IsTrue()
+        public void GreaterThanRegisterRegister()
         {
-            var input = new[] { 1, 3, 0, 1 };
-            var expectedOutput = new[] { 1, 3, 0, 1 };
+            var input = new[] { 1, 2, 3, 4 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 0, 4 };
 
-            var actualOutput = challenge.GreaterThanRegisterImmediate(input);
+            var actualOutput = challenge.GreaterThanRegisterRegister(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
         }
 
         [Fact]
-        public void GreaterThanRegisterRegister_IsFalse()
+        public void EqualImmediateRegister()
         {
-            var input = new[] { 1, 1, 2, 1 };
-            var expectedOutput = new[] { 1, 1, 2, 0 };
+            var input = new[] { 1, 2, 3, 4 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 0, 4 };
 
-            var actualOutput = challenge.GreaterThanRegisterRegister(input);
+            var actualOutput = challenge.EqualImmediateRegister(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
         }
 
         [Fact]
-        public void GreaterThanRegisterRegister_IsTrue()
+        public void EqualRegisterImmediate()
         {
-            var input = new[] { 1, 3, 2, 3 };
-            var expectedOutput = new[] { 1, 3, 2, 1 };
+            var input = new[] { 1, 2, 3, 4 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 1, 4 };
 
-            var actualOutput = challenge.GreaterThanRegisterRegister(input);
+            var actualOutput = challenge.EqualRegisterImmediate(input, instructions);
 
             Assert.Equal(expectedOutput, actualOutput);
+        }
+
+        [Fact]
+        public void EqualRegisterRegister()
+        {
+            var input = new[] { 1, 2, 3, 4 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 0, 4 };
+
+            var actualOutput = challenge.EqualRegisterRegister(input, instructions);
+
+            Assert.Equal(expectedOutput, actualOutput);
+        }
+
+        [Fact]
+        public void GetPossibleOpCodesForTestData()
+        {
+            var testData = challenge.ParseInput(new[]
+            {
+                "Before: [3, 2, 1, 1]", "9 2 1 2", "After:  [3, 2, 2, 1]",
+                "",
+                "Before: [1, 1, 2, 0]", "7 0 2 2", "After:  [1, 1, 2, 0]",
+                "",
+                "Before: [0, 3, 1, 1]", "10 1 3 2", "After:  [0, 3, 9, 1]"
+            });
+
+            var possibleOpCodes = challenge.GetPossibleOpCodes(testData);
+
+            Assert.Equal(3, possibleOpCodes.Count);
+            Assert.Equal(1, possibleOpCodes.Count(x => x.Value >= 3));
+        }
+
+        [Fact]
+        public void GetPossibleOpCodesForTestData_Part1()
+        {
+            var lines = File.ReadAllLines("input.txt");
+            var testData = challenge.ParseInput(lines);
+
+            var possibleOpCodes = challenge.GetPossibleOpCodes(testData);
+
+            Assert.Equal(824, possibleOpCodes.Count);
+            Assert.Equal(500, possibleOpCodes.Count(x => x.Value >= 3));
         }
     }
 }

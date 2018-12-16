@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -5,6 +6,7 @@ namespace part1
 {
     public class Day16
     {
+
         public List<TestData> ParseInput(string[] lines)
         {
             var testData = new List<TestData>{
@@ -19,14 +21,14 @@ namespace part1
 
                 if (lineType == 0 && string.IsNullOrEmpty(line))
                 {
-                    testData.RemoveAt(testDataIndex - 1);
+                    testData.RemoveAll(x => x.Input == null);
                     break;
                 }
 
                 switch (lineType)
                 {
                     case 0:
-                        testData[testDataIndex].Inputs = line
+                        testData[testDataIndex].Input = line
                             .Replace("Before: [", "")
                             .Replace("]", "")
                             .Split(",")
@@ -40,7 +42,7 @@ namespace part1
                             .ToArray();
                         break;
                     case 2:
-                        testData[testDataIndex].Outputs = line
+                        testData[testDataIndex].Output = line
                             .Replace("After: [", "")
                             .Replace("]", "")
                             .Split(",")
@@ -58,100 +60,174 @@ namespace part1
             return testData;
         }
 
-        private static IEnumerable<int> BuildOperationResult(IReadOnlyList<int> input, int operationResult)
+        public Dictionary<int, int> GetPossibleOpCodes(List<TestData> testData)
         {
-            return new[] { input[0], input[1], input[2], operationResult };
+            var operations = new List<Func<int[], int[], int[]>>
+            {
+                AddRegister,
+                AddImmediate,
+                MultiplyRegister,
+                MultiplyImmediate,
+                BitwiseAndRegister,
+                BitwiseAndImmediate,
+                BitwiseOrRegister,
+                BitwiseOrImmediate,
+                SetRegister,
+                SetImmediate,
+                GreaterThanImmediateRegister,
+                GreaterThanRegisterImmediate,
+                GreaterThanRegisterRegister,
+                EqualImmediateRegister,
+                EqualRegisterImmediate,
+                EqualRegisterRegister
+            };
+
+            var possibleOpCodes = new Dictionary<int, int>();
+
+            for (var testDataIndex = 0; testDataIndex < testData.Count; testDataIndex++)
+            {
+                possibleOpCodes.Add(testDataIndex, 0);
+
+                var data = testData[testDataIndex];
+                foreach (var operation in operations)
+                {
+                    var actualOutput = operation(data.Input, data.Instructions);
+
+                    if (actualOutput[0] == data.Output[0] &&
+                        actualOutput[1] == data.Output[1] &&
+                        actualOutput[2] == data.Output[2] &&
+                        actualOutput[3] == data.Output[3])
+                    {
+                        possibleOpCodes[testDataIndex]++;
+                    }
+                }
+            }
+
+            return possibleOpCodes;
         }
 
-        public IEnumerable<int> AddRegister(int[] input)
+        public int[] AddRegister(int[] input, int[] instructions)
         {
-            var operationResult = input[input[1]] + input[input[2]];
+            var operationResult = input[instructions[1]] + input[instructions[2]];
 
-            return BuildOperationResult(input, operationResult);
+            return BuildOperationResult(input, instructions[3], operationResult);
         }
 
-        public IEnumerable<int> AddImmediate(int[] input)
+        public int[] AddImmediate(int[] input, int[] instructions)
         {
-            var operationResult = input[input[1]] + input[2];
+            var operationResult = input[instructions[1]] + instructions[2];
 
-            return BuildOperationResult(input, operationResult);
+            return BuildOperationResult(input, instructions[3], operationResult);
         }
 
-        public IEnumerable<int> MultiplyRegister(int[] input)
+        public int[] MultiplyRegister(int[] input, int[] instructions)
         {
-            var operationResult = input[input[1]] * input[input[2]];
+            var operationResult = input[instructions[1]] * input[instructions[2]];
 
-            return BuildOperationResult(input, operationResult);
+            return BuildOperationResult(input, instructions[3], operationResult);
         }
 
-        public IEnumerable<int> MultiplyImmediate(int[] input)
+        public int[] MultiplyImmediate(int[] input, int[] instructions)
         {
-            var operationResult = input[input[1]] * input[2];
+            var operationResult = input[instructions[1]] * instructions[2];
 
-            return BuildOperationResult(input, operationResult);
+            return BuildOperationResult(input, instructions[3], operationResult);
         }
 
-        public IEnumerable<int> BitwiseAndRegister(int[] input)
+        public int[] BitwiseAndRegister(int[] input, int[] instructions)
         {
-            var operationResult = input[input[1]] & input[input[2]];
+            var operationResult = input[instructions[1]] & input[instructions[2]];
 
-            return BuildOperationResult(input, operationResult);
+            return BuildOperationResult(input, instructions[3], operationResult);
         }
 
-        public IEnumerable<int> BitwiseAndImmediate(int[] input)
+        public int[] BitwiseAndImmediate(int[] input, int[] instructions)
         {
-            var operationResult = input[input[1]] & input[2];
+            var operationResult = input[instructions[1]] & instructions[2];
 
-            return BuildOperationResult(input, operationResult);
+            return BuildOperationResult(input, instructions[3], operationResult);
         }
 
-        public IEnumerable<int> BitwiseOrRegister(int[] input)
+        public int[] BitwiseOrRegister(int[] input, int[] instructions)
         {
-            var operationResult = input[input[1]] | input[input[2]];
+            var operationResult = input[instructions[1]] | input[instructions[2]];
 
-            return BuildOperationResult(input, operationResult);
+            return BuildOperationResult(input, instructions[3], operationResult);
         }
 
-        public IEnumerable<int> BitwiseOrImmediate(int[] input)
+        public int[] BitwiseOrImmediate(int[] input, int[] instructions)
         {
-            var operationResult = input[input[1]] | input[2];
+            var operationResult = input[instructions[1]] | instructions[2];
 
-            return BuildOperationResult(input, operationResult);
+            return BuildOperationResult(input, instructions[3], operationResult);
         }
 
-        public IEnumerable<int> SetRegister(int[] input)
+        public int[] SetRegister(int[] input, int[] instructions)
         {
-            var operationResult = input[input[1]];
+            var operationResult = input[instructions[1]];
 
-            return BuildOperationResult(input, operationResult);
+            return BuildOperationResult(input, instructions[3], operationResult);
         }
 
-        public IEnumerable<int> SetImmediate(int[] input)
+        public int[] SetImmediate(int[] input, int[] instructions)
         {
-            var operationResult = input[1];
+            var operationResult = instructions[1];
 
-            return BuildOperationResult(input, operationResult);
+            return BuildOperationResult(input, instructions[3], operationResult);
         }
 
-        public IEnumerable<int> GreaterThanImmediateRegister(int[] input)
+        public int[] GreaterThanImmediateRegister(int[] input, int[] instructions)
         {
-            var operationResult = input[1] > input[input[2]] ? 1 : 0;
+            var operationResult = instructions[1] > input[instructions[2]] ? 1 : 0;
 
-            return BuildOperationResult(input, operationResult);
+            return BuildOperationResult(input, instructions[3], operationResult);
         }
 
-        public IEnumerable<int> GreaterThanRegisterImmediate(int[] input)
+        public int[] GreaterThanRegisterImmediate(int[] input, int[] instructions)
         {
-            var operationResult = input[input[1]] > input[2] ? 1 : 0;
+            var operationResult = input[instructions[1]] > instructions[2] ? 1 : 0;
 
-            return BuildOperationResult(input, operationResult);
+            return BuildOperationResult(input, instructions[3], operationResult);
         }
 
-        public IEnumerable<int> GreaterThanRegisterRegister(int[] input)
+        public int[] GreaterThanRegisterRegister(int[] input, int[] instructions)
         {
-            var operationResult = input[input[1]] > input[input[2]] ? 1 : 0;
+            var operationResult = input[instructions[1]] > input[instructions[2]] ? 1 : 0;
 
-            return BuildOperationResult(input, operationResult);
+            return BuildOperationResult(input, instructions[3], operationResult);
+        }
+
+        public int[] EqualImmediateRegister(int[] input, int[] instructions)
+        {
+            var operationResult = instructions[1] == input[instructions[2]] ? 1 : 0;
+
+            return BuildOperationResult(input, instructions[3], operationResult);
+        }
+
+        public int[] EqualRegisterImmediate(int[] input, int[] instructions)
+        {
+            var operationResult = input[instructions[1]] == instructions[2] ? 1 : 0;
+
+            return BuildOperationResult(input, instructions[3], operationResult);
+        }
+
+        public int[] EqualRegisterRegister(int[] input, int[] instructions)
+        {
+            var operationResult = input[instructions[1]] == input[instructions[2]] ? 1 : 0;
+
+            return BuildOperationResult(input, instructions[3], operationResult);
+        }
+
+        private static int[] BuildOperationResult(IReadOnlyList<int> input, int register, int operationResult)
+        {
+
+            return new[]
+            {
+                register == 0 ? operationResult : input[0],
+                register == 1 ? operationResult : input[1],
+                register == 2 ? operationResult : input[2],
+                register == 3 ? operationResult : input[3]
+            };
         }
     }
 }
