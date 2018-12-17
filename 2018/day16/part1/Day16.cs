@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace part1
@@ -135,6 +136,10 @@ namespace part1
                     Occurences = groupedLikelyOpCodes.Count()
                 };
 
+            File.WriteAllLines("output.txt", groupedOpCodes
+            .OrderBy(x => x.OperationCode)
+            .ThenBy(x => x.operationIndex)
+            .Select(x => x.OperationCode + ": " + x.OperationIndex + " = " + x.Occurences));
             return groupedOpCodes.ToList();
         }
 
