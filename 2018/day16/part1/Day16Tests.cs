@@ -305,9 +305,9 @@ namespace part1
         {
             var lines = File.ReadAllLines("input.txt");
             var testInput = challenge.ParseTestInput(lines);
-            var expectedRegister = new[] { 0, 0, 0, 0 };
+            var expectedRegister = new[] { 533, 533, 3, 3 };
 
-            int[] actualRegister = challenge.ExecuteProgram(testInput);
+            var actualRegister = challenge.ExecuteProgram(testInput);
 
             Assert.Equal(expectedRegister, actualRegister);
         }

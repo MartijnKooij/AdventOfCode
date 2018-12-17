@@ -143,16 +143,19 @@ namespace part1
             return groupedOpCodes.ToList();
         }
 
-        public int[] ExecuteProgram(List<int[]> testInput)
+        public int[] ExecuteProgram(IEnumerable<int[]> testInput)
         {
+            var currentRegister = new [] {0, 0, 0, 0};
             foreach (var register in testInput)
             {
-                var operation = Operations[register[0]];
-                var output = operation(data.Input, data.Instructions);
+                var operation = Operations[opCodeIndices[register[0]]];
+                currentRegister = operation(currentRegister, register);
             }
+
+            return currentRegister;
         }
 
-        private int[] OpCodeIndices = new[] { 6, 0, 15, 1, 14, 13, 11, 2, 8, 10, 3, 4, 9, 12, 5, 7 };
+        private readonly int[] opCodeIndices = { 6, 0, 15, 1, 14, 13, 11, 2, 8, 10, 3, 4, 9, 12, 5, 7 };
 
         private List<Func<int[], int[], int[]>> Operations
         {
