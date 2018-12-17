@@ -11,22 +11,38 @@ namespace part1
     {
         public static void Main()
         {
-            var input = File.ReadAllLines("testinput3.txt");
+            var expectedAnswers = new[] { 27730, 36334, 39514, 27755, 28944, 18740 };
+            for (var testFile = 0; testFile < 6; testFile++)
+            {
+                var lines = File.ReadAllLines($"testinput{testFile}.txt");
+                var answer = Battle(lines);
+                if (answer != expectedAnswers[testFile])
+                {
+                    throw new InvalidOperationException($"Test input {testFile} did not produce the expected answer of {expectedAnswers[testFile]} but gave {answer}");
+                }
+            }
+        }
 
+        private static int Battle(IReadOnlyList<string> input)
+        {
             var players = InitializePlayers(input);
             var grid = InitializeGrid(input);
 
             var turns = 0;
-            var hasWinner = false;
-            while (!hasWinner)
+            while (true)
             {
                 var orderedPlayers = players.OrderBy(x => x.Position.Y).ThenBy(x => x.Position.X);
                 foreach (var player in orderedPlayers)
                 {
-                    if (HasWinner(players.Where(x => !x.IsDead).ToImmutableArray(), turns))
+                    if (HasWinner(players.Where(x => !x.IsDead).ToImmutableArray()))
                     {
-                        hasWinner = true;
-                        break;
+                        players.RemoveAll(x => x.IsDead);
+                        var answer = turns * players.Sum(x => x.HitPoints);
+
+                        LogGrid(grid, players, turns);
+                        Console.WriteLine($"The battle is over after {turns} turns with {players.Sum(x => x.HitPoints)} HP left. The answer is {answer}");
+
+                        return answer;
                     }
 
                     if (player.IsDead) continue;
@@ -69,11 +85,11 @@ namespace part1
 
                 turns++;
 
-                LogGrid(grid, players, turns);
+                //LogGrid(grid, players, turns);
             }
         }
 
-        private static bool HasWinner(IReadOnlyCollection<Player> players, int turns)
+        private static bool HasWinner(IReadOnlyCollection<Player> players)
         {
             var firstType = players.First().Type;
             if (players.Any(x => x.Type != firstType))
@@ -81,8 +97,6 @@ namespace part1
                 return false;
             }
 
-            Console.WriteLine(
-                $"The battle is over after {turns} turns with {players.Sum(x => x.HitPoints)} HP left. The answer is {turns * players.Sum((x => x.HitPoints))}");
             return true;
         }
 
@@ -172,7 +186,7 @@ namespace part1
             {
                 var pathGrid = CreatePathFindingGrid(grid, enemy);
 
-                var offsets = new[] {new Offset(0, -1), new Offset(1, 0), new Offset(0, 1), new Offset(-1, 0)};
+                var offsets = new[] { new Offset(0, -1), new Offset(1, 0), new Offset(0, 1), new Offset(-1, 0) };
                 foreach (var offset in offsets)
                 {
                     var destination = new Position(enemy.Position.X + offset.X, enemy.Position.Y + offset.Y);
