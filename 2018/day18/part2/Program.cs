@@ -15,6 +15,7 @@ namespace part1
             var totalMinutes = 1000000000;
             var map = ParseMap(lines);
             var newMap = new char[mapSize, mapSize];
+            var surroundings = new char[Offsets.Length];
 
             var lastPercentage = 0.0;
             for (var minute = 0; minute < totalMinutes; minute++)
@@ -23,7 +24,7 @@ namespace part1
                 {
                     for (var x = 0; x < mapSize; x++)
                     {
-                        var surroundings = GetSurroundings(map, x, y);
+                        UpdateSurroundings(map, x, y, surroundings);
                         (int treeCount, int lumberCount) = CountSurroundings(surroundings);
 
                         switch (map[x, y])
@@ -104,22 +105,21 @@ namespace part1
             new Offset(-1, -1)
             };
 
-        private static char[] GetSurroundings(char[,] map, int x, int y)
+        private static void UpdateSurroundings(char[,] map, int x, int y, char[] surroundings)
         {
-            var surroundings = new List<char>();
-
-            foreach (var offset in Offsets)
+            for (int i = 0; i < Offsets.Length; i++)
             {
-                var nearbyX = x + offset.X;
-                var nearbyY = y + offset.Y;
+                var nearbyX = x + Offsets[i].X;
+                var nearbyY = y + Offsets[i].Y;
                 if (nearbyX < 0 || nearbyX >= mapSize || nearbyY < 0 || nearbyY >= mapSize)
                 {
-                    continue;
+                    surroundings[i] = 'x';
                 }
-                surroundings.Add(map[nearbyX, nearbyY]);
+                else
+                {
+                    surroundings[i] = map[nearbyX, nearbyY];
+                }
             }
-
-            return surroundings.ToArray();
         }
 
         private static char[,] ParseMap(string[] lines)
