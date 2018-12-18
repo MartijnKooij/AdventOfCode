@@ -1,6 +1,7 @@
 ﻿using RoyT.AStar;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 
@@ -10,8 +11,8 @@ namespace part1
     {
         public static void Main()
         {
-            // var expectedAnswers = new[] { 27730, 36334, 39514, 27755, 28944, 18740 };
-            // for (var testFile = 0; testFile < 6; testFile++)
+            // var expectedAnswers = new[] { 27730, 36334, 39514, 27755, 28944, 18740, 12744, 10430, 10234, 9933, 10234 };
+            // for (var testFile = 0; testFile < expectedAnswers.Length; testFile++)
             // {
             //     var lines = File.ReadAllLines($"testinput{testFile}.txt");
             //     var answer = Battle(lines);
@@ -21,7 +22,7 @@ namespace part1
             //     }
             // }
 
-            var lines = File.ReadAllLines($"input.txt");
+            var lines = File.ReadAllLines($"testinput10.txt");
             Battle(lines);
         }
 
@@ -33,23 +34,19 @@ namespace part1
             var turns = 0;
             while (true)
             {
-                var orderedPlayers = players.OrderBy(x => x.Position.Y).ThenBy(x => x.Position.X);
+                var orderedPlayers = players.OrderBy(x => x.Position.Y).ThenBy(x => x.Position.X).ToImmutableArray();
                 foreach (var player in orderedPlayers)
                 {
-                    if (HasWinner(players))
+                    if (IsBattleOver(orderedPlayers))
                     {
-                        players.RemoveAll(x => x.IsDead);
-                        var answer = turns * players.Sum(x => x.HitPoints);
-
-                        LogGrid(grid, players, turns);
-                        Console.WriteLine($"The battle is over after {turns} turns with {players.Sum(x => x.HitPoints)} HP left. The answer is {answer}");
+                        var answer = FinalizeAnswer(players, turns, grid);
 
                         return answer;
                     }
 
                     if (player.IsDead) continue;
 
-                    var (nearestReachableEnemyPosition, nearestReachableEnemy) = player.GetNearestReachableEnemy(players, grid, false);
+                    var (nearestReachableEnemyPosition, nearestReachableEnemy) = player.GetNearestReachableEnemy(orderedPlayers, grid, false);
                     if (nearestReachableEnemy == null)
                     {
                         //No reachable enemies, have some hot chocolate while you wait...
@@ -68,7 +65,7 @@ namespace part1
                         continue;
                     }
 
-                    var (_, weakestNearbyEnemy) = player.GetNearestReachableEnemy(players, grid, true);
+                    var (_, weakestNearbyEnemy) = player.GetNearestReachableEnemy(orderedPlayers, grid, true);
 
                     //HIT HIM!!!!
                     weakestNearbyEnemy.Hit();
@@ -87,6 +84,21 @@ namespace part1
             }
         }
 
+        private static int FinalizeAnswer(List<Player> players, int turns, char[,] grid)
+        {
+            players.RemoveAll(x => x.IsDead);
+
+            var totalHitPointsLeft = players.Sum(x => x.HitPoints);
+            var answer = turns * totalHitPointsLeft;
+
+            LogGrid(grid, players, turns);
+
+            Console.WriteLine(
+                $"The battle is over after {turns} turns with {totalHitPointsLeft} HP left. The answer is {answer}");
+
+            return answer;
+        }
+
         private static void MoveTowardsEnemyPosition(Player player, Position enemyPosition, char[,] grid)
         {
             var oldPosition = player.Position;
@@ -101,7 +113,7 @@ namespace part1
             return Distance(player.Position, nearestReachableEnemy.Position) <= 1;
         }
 
-        private static bool HasWinner(IEnumerable<Player> players)
+        private static bool IsBattleOver(IEnumerable<Player> players)
         {
             var alivePlayers = players.Where(x => !x.IsDead).ToList();
 
@@ -187,9 +199,23 @@ namespace part1
             bool weakestFirst
             )
         {
-            var enemies = players
-                .Where(x => x.Type != Type && !x.IsDead)
-                .OrderBy(x => weakestFirst ? x.HitPoints : 0)
+            var offsets = new[] { new Offset(0, -1), new Offset(-1, 0), new Offset(1, 0), new Offset(0, 1) };
+
+            var enemies = players.Where(x => x.Type != Type && !x.IsDead);
+            var targetPositionedEnemies = new List<Player>();
+            foreach (var enemy in enemies)
+            {
+                targetPositionedEnemies.AddRange(offsets
+                    .Select(offset => new Player
+                    {
+                        HitPoints = enemy.HitPoints,
+                        Type = enemy.Type,
+                        Position = new Position(enemy.Position.X + offset.X, enemy.Position.Y + offset.Y)
+                    })
+                    .Where(targetEnemy => grid[targetEnemy.Position.X, targetEnemy.Position.Y] != '#'));
+            }
+
+            enemies = targetPositionedEnemies.OrderBy(x => weakestFirst ? x.HitPoints : 0)
                 .ThenBy(x => x.Position.Y)
                 .ThenBy(x => x.Position.X);
 
@@ -200,9 +226,9 @@ namespace part1
             {
                 var pathGrid = CreatePathFindingGrid(grid, enemy);
 
-                var offsets = new[] { new Offset(0, -1), new Offset(-1, 0), new Offset(1, 0), new Offset(0, 1) };
                 foreach (var offset in offsets)
                 {
+                    //Get the path distance to the destination in reading order
                     var destination = new Position(enemy.Position.X + offset.X, enemy.Position.Y + offset.Y);
                     var pathToEnemy = pathGrid.GetPath(Position, destination, MovementPatterns.LateralOnly);
 
