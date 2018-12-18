@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -6,50 +7,119 @@ namespace part1
 {
     class Program
     {
-        static void Main(string[] args)
+        private const int mapSize = 50;
+
+        static void Main()
         {
             var lines = File.ReadAllLines("input.txt");
-            char[,] map = ParseMap(lines);
+            var map = ParseMap(lines);
 
-            for (int minute = 0; minute < 10; minute++)
+            for (var minute = 0; minute < 10; minute++)
             {
-                var temporaryMap = new char[50, 50];
-                for (int y = 0; y < map.GetLength(1); y++)
+                var newMap = new char[mapSize, mapSize];
+                for (var y = 0; y < mapSize; y++)
                 {
-                    for (int x = 0; x < map.GetLength(0); x++)
+                    for (var x = 0; x < mapSize; x++)
                     {
                         var surroundings = GetSurroundings(map, x, y);
+                        (int treeCount, int lumberCount) = CountSurroundings(surroundings);
+
+                        switch (map[x, y])
+                        {
+                            case '.':
+                                newMap[x, y] = treeCount >= 3 ? '|' : '.';
+                                break;
+                            case '|':
+                                newMap[x, y] = lumberCount >= 3 ? '#' : '|';
+                                break;
+                            case '#':
+                                var hasAtLeastOneLumber = lumberCount >= 1;
+                                var hasAtLeastOneTree = treeCount >= 1;
+                                newMap[x, y] = hasAtLeastOneLumber && hasAtLeastOneTree ? '#' : '.';
+                                break;
+                        }
                     }
+                }
+
+                map = newMap;
+
+                LogMap(map, minute + 1);
+            }
+
+            int answer = ComputeAnswer(map);
+            Console.WriteLine($"The answer is {answer}");
+        }
+
+        private static int ComputeAnswer(char[,] map)
+        {
+            var lumberCount = 0;
+            var treeCount = 0;
+            for (var y = 0; y < map.GetLength(1); y++)
+            {
+                for (var x = 0; x < map.GetLength(0); x++)
+                {
+                    switch (map[x, y])
+                    {
+                        case '|':
+                            treeCount++;
+                            break;
+                        case '#':
+                            lumberCount++;
+                            break;
+                    }
+
                 }
             }
 
-            LogMap(map);
+            int answer = treeCount * lumberCount;
+            return answer;
         }
 
-        private readonly Offset[] offsets = new[] {
+        private static (int treeCount, int lumberCount) CountSurroundings(char[] surroundings)
+        {
+            var treeCount = surroundings.Count(s => s == '|');
+            var lumberCount = surroundings.Count(s => s == '#');
+
+            return (treeCount, lumberCount);
+        }
+
+        private static readonly Offset[] Offsets = {
             new Offset(0, -1),
             new Offset(1, -1),
             new Offset(1, 0),
             new Offset(1, 1),
             new Offset(0, 1),
-            new Offset(0, -1),
+            new Offset(-1, 1),
             new Offset(-1, 0),
             new Offset(-1, -1)
             };
 
         private static char[] GetSurroundings(char[,] map, int x, int y)
         {
+            var surroundings = new List<char>();
 
+            foreach (var offset in Offsets)
+            {
+                var nearbyX = x + offset.X;
+                var nearbyY = y + offset.Y;
+                if (nearbyX < 0 || nearbyX >= mapSize || nearbyY < 0 || nearbyY >= mapSize)
+                {
+                    continue;
+                }
+                surroundings.Add(map[nearbyX, nearbyY]);
+            }
+
+            return surroundings.ToArray();
         }
 
         private static char[,] ParseMap(string[] lines)
         {
-            var map = new char[50, 50];
+            var map = new char[mapSize, mapSize];
 
-            for (int y = 0; y < lines.Length; y++)
+            for (var y = 0; y < lines.Length; y++)
             {
                 var line = lines[y];
-                for (int x = 0; x < line.Length; x++)
+                for (var x = 0; x < line.Length; x++)
                 {
                     map[x, y] = line[x];
                 }
@@ -58,12 +128,13 @@ namespace part1
             return map;
         }
 
-        private static void LogMap(char[,] map)
+        private static void LogMap(char[,] map, int minute)
         {
-            for (int y = 0; y < map.GetLength(1); y++)
+            Console.WriteLine($"Map after {minute} minutes");
+            for (var y = 0; y < mapSize; y++)
             {
                 var line = "";
-                for (int x = 0; x < map.GetLength(0); x++)
+                for (var x = 0; x < mapSize; x++)
                 {
                     line += map[x, y];
                 }
