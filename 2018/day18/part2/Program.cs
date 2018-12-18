@@ -7,19 +7,21 @@ namespace part1
 {
     class Program
     {
+        private const int mapSize = 50;
+
         static void Main()
         {
             var lines = File.ReadAllLines("input.txt");
             var totalMinutes = 1000000000;
             var map = ParseMap(lines);
+            var newMap = new char[mapSize, mapSize];
 
             var lastPercentage = 0.0;
             for (var minute = 0; minute < totalMinutes; minute++)
             {
-                var newMap = new char[50, 50];
-                for (var y = 0; y < map.GetLength(1); y++)
+                for (var y = 0; y < mapSize; y++)
                 {
-                    for (var x = 0; x < map.GetLength(0); x++)
+                    for (var x = 0; x < mapSize; x++)
                     {
                         var surroundings = GetSurroundings(map, x, y);
                         (int treeCount, int lumberCount) = CountSurroundings(surroundings);
@@ -70,9 +72,9 @@ namespace part1
         {
             var lumberCount = 0;
             var treeCount = 0;
-            for (var y = 0; y < map.GetLength(1); y++)
+            for (var y = 0; y < mapSize; y++)
             {
-                for (var x = 0; x < map.GetLength(0); x++)
+                for (var x = 0; x < mapSize; x++)
                 {
                     switch (map[x, y])
                     {
@@ -110,7 +112,7 @@ namespace part1
             {
                 var nearbyX = x + offset.X;
                 var nearbyY = y + offset.Y;
-                if (nearbyX < 0 || nearbyX >= map.GetLength(0) || nearbyY < 0 || nearbyY >= map.GetLength(1))
+                if (nearbyX < 0 || nearbyX >= mapSize || nearbyY < 0 || nearbyY >= mapSize)
                 {
                     continue;
                 }
@@ -122,7 +124,7 @@ namespace part1
 
         private static char[,] ParseMap(string[] lines)
         {
-            var map = new char[50, 50];
+            var map = new char[mapSize, mapSize];
 
             for (var y = 0; y < lines.Length; y++)
             {
