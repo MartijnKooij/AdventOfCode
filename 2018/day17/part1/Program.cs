@@ -58,23 +58,41 @@ namespace part1
             }
 
             var runs = 0;
+            int yMax = allYValues.Max();
+            int xMin = allXValues.Min();
+            int xMax = allXValues.Max();
             while (true)
             {
-                for (var y = 1; y < allYValues.Max() + 1; y++)
+                for (var y = 1; y < yMax + 1; y++)
                 {
-                    for (var x = allXValues.Min() - 1; x < allXValues.Max() + 1; x++)
+                    for (var x = xMin - 1; x < xMax + 1; x++)
                     {
+                        // On clay
                         if (map[x, y] == "#") continue;
 
+                        // Below source or at stream
                         if (map[x, y - 1] == "+" || map[x, y - 1] == "|")
                         {
                             map[x, y] = "|";
                         }
 
+                        // At stream or at standing water
                         if (map[x, y] == "|" || map[x, y] == "~")
                         {
                             if (map[x, y + 1] == "#")
                             {
+                                map[x, y] = "~";
+                            }
+                        }
+
+                        //Besides stream or standing water
+                        if (map[x - 1, y] == "|" || map[x + 1, y] == "|" || map[x - 1, y] == "~" || map[x + 1, y] == "~")
+                        {
+                            // And on top of clay or standing water
+                            if (map[x, y + 1] == "#" || map[x, y + 1] == "~")
+                            {
+                                // And with walls besides me
+                                
                                 map[x, y] = "~";
                             }
                         }
