@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace part1
@@ -63,10 +64,10 @@ namespace part1
         public List<int[]> ParseTestInput(IEnumerable<string> lines)
         {
             return (from line in lines.Skip(3298)
-                where !string.IsNullOrEmpty(line)
-                select line.Split(" ")
-                    .Select(x => int.Parse(x.Trim()))
-                    .ToArray()).ToList();
+                    where !string.IsNullOrEmpty(line)
+                    select line.Split(" ")
+                        .Select(x => int.Parse(x.Trim()))
+                        .ToArray()).ToList();
         }
 
         public Dictionary<int, int> GetPossibleOpCodes(List<TestData> testData)
@@ -135,8 +136,26 @@ namespace part1
                     Occurences = groupedLikelyOpCodes.Count()
                 };
 
+            File.WriteAllLines("output.txt", groupedOpCodes
+            .OrderBy(x => x.OperationCode)
+            .ThenBy(x => x.OperationIndex)
+            .Select(x => x.OperationCode + ": " + x.OperationIndex + " = " + x.Occurences));
             return groupedOpCodes.ToList();
         }
+
+        public int[] ExecuteProgram(IEnumerable<int[]> testInput)
+        {
+            var currentRegister = new [] {0, 0, 0, 0};
+            foreach (var register in testInput)
+            {
+                var operation = Operations[opCodeIndices[register[0]]];
+                currentRegister = operation(currentRegister, register);
+            }
+
+            return currentRegister;
+        }
+
+        private readonly int[] opCodeIndices = { 6, 0, 15, 1, 14, 13, 11, 2, 8, 10, 3, 4, 9, 12, 5, 7 };
 
         private List<Func<int[], int[], int[]>> Operations
         {

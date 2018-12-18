@@ -1,7 +1,6 @@
 ﻿using RoyT.AStar;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 
@@ -11,27 +10,46 @@ namespace part1
     {
         public static void Main()
         {
-            var input = File.ReadAllLines("testinput3.txt");
+            // var expectedAnswers = new[] { 27730, 36334, 39514, 27755, 28944, 18740 };
+            // for (var testFile = 0; testFile < 6; testFile++)
+            // {
+            //     var lines = File.ReadAllLines($"testinput{testFile}.txt");
+            //     var answer = Battle(lines);
+            //     if (answer != expectedAnswers[testFile])
+            //     {
+            //         throw new InvalidOperationException($"Test input {testFile} did not produce the expected answer of {expectedAnswers[testFile]} but gave {answer}");
+            //     }
+            // }
 
+            var lines = File.ReadAllLines($"input.txt");
+            Battle(lines);
+        }
+
+        private static int Battle(IReadOnlyList<string> input)
+        {
             var players = InitializePlayers(input);
             var grid = InitializeGrid(input);
 
             var turns = 0;
-            var hasWinner = false;
-            while (!hasWinner)
+            while (true)
             {
                 var orderedPlayers = players.OrderBy(x => x.Position.Y).ThenBy(x => x.Position.X);
                 foreach (var player in orderedPlayers)
                 {
-                    if (HasWinner(players.Where(x => !x.IsDead).ToImmutableArray(), turns))
+                    if (HasWinner(players))
                     {
-                        hasWinner = true;
-                        break;
+                        players.RemoveAll(x => x.IsDead);
+                        var answer = turns * players.Sum(x => x.HitPoints);
+
+                        LogGrid(grid, players, turns);
+                        Console.WriteLine($"The battle is over after {turns} turns with {players.Sum(x => x.HitPoints)} HP left. The answer is {answer}");
+
+                        return answer;
                     }
 
                     if (player.IsDead) continue;
 
-                    var nearestReachableEnemy = player.GetNearestReachableEnemy(players, grid, false);
+                    var (nearestReachableEnemyPosition, nearestReachableEnemy) = player.GetNearestReachableEnemy(players, grid, false);
                     if (nearestReachableEnemy == null)
                     {
                         //No reachable enemies, have some hot chocolate while you wait...
@@ -42,7 +60,7 @@ namespace part1
                     if (Distance(player.Position, nearestReachableEnemy.Position) > 1)
                     {
                         var currentPosition = player.Position;
-                        var newPosition = player.MoveToNearestEnemy(nearestReachableEnemy, grid);
+                        var newPosition = player.MoveToNearestEnemyPosition(nearestReachableEnemy, nearestReachableEnemyPosition, grid);
 
                         grid[currentPosition.X, currentPosition.Y] = '.';
                         grid[newPosition.X, newPosition.Y] = player.Type;
@@ -54,7 +72,7 @@ namespace part1
                         continue;
                     }
 
-                    var weakestNearbyEnemy = player.GetNearestReachableEnemy(players, grid, true);
+                    var (_, weakestNearbyEnemy) = player.GetNearestReachableEnemy(players, grid, true);
 
                     //HIT HIM!!!!
                     weakestNearbyEnemy.Hit();
@@ -69,21 +87,16 @@ namespace part1
 
                 turns++;
 
-                LogGrid(grid, players, turns);
+                //LogGrid(grid, players, turns);
             }
         }
 
-        private static bool HasWinner(IReadOnlyCollection<Player> players, int turns)
+        private static bool HasWinner(IList<Player> players)
         {
-            var firstType = players.First().Type;
-            if (players.Any(x => x.Type != firstType))
-            {
-                return false;
-            }
+            var alivePlayers = players.Where(x => !x.IsDead).ToList();
 
-            Console.WriteLine(
-                $"The battle is over after {turns} turns with {players.Sum(x => x.HitPoints)} HP left. The answer is {turns * players.Sum((x => x.HitPoints))}");
-            return true;
+            var firstType = alivePlayers.First().Type;
+            return alivePlayers.All(x => x.Type == firstType);
         }
 
         private static void LogGrid(char[,] grid, IReadOnlyCollection<Player> players, int turns)
@@ -158,7 +171,11 @@ namespace part1
         public int HitPoints { get; set; }
         public bool IsDead => HitPoints <= 0;
 
-        public Player GetNearestReachableEnemy(IReadOnlyList<Player> players, char[,] grid, bool weakestFirst)
+        public (Position position, Player player) GetNearestReachableEnemy(
+            IReadOnlyList<Player> players,
+            char[,] grid,
+            bool weakestFirst
+            )
         {
             var enemies = players
                 .Where(x => x.Type != Type && !x.IsDead)
@@ -168,11 +185,12 @@ namespace part1
 
             var shortestPath = int.MaxValue;
             Player nearestReachableEnemy = null;
+            var nearestReachableEnemyPosition = new Position(int.MaxValue, int.MaxValue);
             foreach (var enemy in enemies)
             {
                 var pathGrid = CreatePathFindingGrid(grid, enemy);
 
-                var offsets = new[] {new Offset(0, -1), new Offset(1, 0), new Offset(0, 1), new Offset(-1, 0)};
+                var offsets = new[] { new Offset(0, -1), new Offset(1, 0), new Offset(0, 1), new Offset(-1, 0) };
                 foreach (var offset in offsets)
                 {
                     var destination = new Position(enemy.Position.X + offset.X, enemy.Position.Y + offset.Y);
@@ -181,30 +199,41 @@ namespace part1
                     //No clear path to this enemy found
                     if (pathToEnemy.Length == 0) continue;
 
-                    if (pathToEnemy.Length >= shortestPath && pathToEnemy.Length > 0) continue;
+                    if (pathToEnemy.Length >= shortestPath) continue;
 
                     shortestPath = pathToEnemy.Length;
                     nearestReachableEnemy = enemy;
+                    nearestReachableEnemyPosition = destination;
                 }
             }
 
-            return nearestReachableEnemy;
+            return (position: nearestReachableEnemyPosition, player: nearestReachableEnemy);
+        }
+
+        public Position MoveToNearestEnemyPosition(
+            Player nearestEnemy,
+            Position nearestEnemyPosition,
+            char[,] grid
+            )
+        {
+            var shortestPathGrid = CreatePathFindingGrid(grid, nearestEnemy);
+
+            var pathToNearestEnemy =
+                shortestPathGrid.GetPath(Position, nearestEnemyPosition, MovementPatterns.LateralOnly);
+
+            //No clear path to this position found
+            if (pathToNearestEnemy.Length == 0)
+            {
+                throw new InvalidOperationException("Cannot move to nearestEnemyPosition anymore?");
+            }
+
+            Position = pathToNearestEnemy[1];
+            return Position;
         }
 
         public void Hit()
         {
             HitPoints -= 3;
-        }
-
-        public Position MoveToNearestEnemy(Player nearestEnemy, char[,] grid)
-        {
-            var shortestPathGrid = CreatePathFindingGrid(grid, nearestEnemy);
-            var pathToNearestEnemy = shortestPathGrid.GetPath(
-                Position, nearestEnemy.Position, MovementPatterns.LateralOnly);
-
-            Position = pathToNearestEnemy[1];
-
-            return Position;
         }
 
         private static Grid CreatePathFindingGrid(char[,] grid, Player enemy)

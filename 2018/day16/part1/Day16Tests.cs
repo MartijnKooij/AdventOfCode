@@ -61,9 +61,9 @@ namespace part1
         [Fact]
         public void AddRegister()
         {
-            var input = new[] {1, 2, 3, 4};
-            var instructions = new[] {0, 2, 3, 2};
-            var expectedOutput = new[] {1, 2, 7, 4};
+            var input = new[] { 1, 2, 3, 4 };
+            var instructions = new[] { 0, 2, 3, 2 };
+            var expectedOutput = new[] { 1, 2, 7, 4 };
 
             var actualOutput = challenge.AddRegister(input, instructions);
 
@@ -288,8 +288,7 @@ namespace part1
 
             var likelyOpCodes = challenge.GetLikelyOpCodes(testData);
 
-            Assert.Equal(16, likelyOpCodes.Count);
-            Assert.Equal(500, likelyOpCodes.Count(x => x.Occurences == 1));
+            Assert.Equal(100, likelyOpCodes.Count);
         }
 
         [Fact]
@@ -299,6 +298,18 @@ namespace part1
             var testInput = challenge.ParseTestInput(lines);
 
             Assert.Equal(876, testInput.Count);
+        }
+
+        [Fact]
+        public void ExecuteProgram()
+        {
+            var lines = File.ReadAllLines("input.txt");
+            var testInput = challenge.ParseTestInput(lines);
+            var expectedRegister = new[] { 533, 533, 3, 3 };
+
+            var actualRegister = challenge.ExecuteProgram(testInput);
+
+            Assert.Equal(expectedRegister, actualRegister);
         }
 
     }
