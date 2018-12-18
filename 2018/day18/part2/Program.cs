@@ -12,19 +12,61 @@ namespace part1
         static void Main()
         {
             var lines = File.ReadAllLines("input.txt");
-            var totalMinutes = 1000000000;
             var map = ParseMap(lines);
-            var newMap = new char[mapSize, mapSize];
-            var surroundings = new char[Offsets.Length];
+            var mapHistory = new List<char[]>();
+            char[] firstRepeatedFlatMap = new char[0];
 
-            var lastPercentage = 0.0;
-            for (var minute = 0; minute < totalMinutes; minute++)
+            for (var minute = 0; minute < 1000000000; minute++)
             {
+                /*
+First Repeated map found at minute 628 answer would now be 179850
+Repeated map found at minute 656 answer would now be 179850
+Repeated map found at minute 684 answer would now be 179850
+Repeated map found at minute 712 answer would now be 179850
+Repeated map found at minute 740 answer would now be 179850
+Repeated map found at minute 768 answer would now be 179850
+Repeated map found at minute 796 answer would now be 179850
+Repeated map found at minute 824 answer would now be 179850
+Repeated map found at minute 852 answer would now be 179850
+
+Repeat every 28 minutes starting at 628
+1000000000 - 628 = 999999372 % 28 = 8 => check at 636 = 169024                
+                 */
+                if (minute == (628 + 28 + 8) || minute == (628 + 2 * 28 + 8) || minute == (628 + 2 * 28 + 8))
+                {
+                    var answerAtRepeat = ComputeAnswer(map);
+
+                    //LogMap(map, minute + 1);
+                    Console.WriteLine($"The answer might be {answerAtRepeat}");
+                }
+                var flatMap = map.Cast<char>().ToArray();
+                if (mapHistory.Any((m) => Enumerable.SequenceEqual(m, flatMap)) && firstRepeatedFlatMap.Length == 0)
+                {
+                    firstRepeatedFlatMap = flatMap;
+                    var answerAtRepeat = ComputeAnswer(map);
+
+                    //LogMap(map, minute + 1);
+                    Console.WriteLine($"First Repeated map found at minute {minute} answer would now be {answerAtRepeat}");
+
+                    //break;
+                }
+                else if (Enumerable.SequenceEqual(firstRepeatedFlatMap, flatMap))
+                {
+                    var answerAtRepeat = ComputeAnswer(map);
+
+                    //LogMap(map, minute + 1);
+                    Console.WriteLine($"Repeated map found at minute {minute} answer would now be {answerAtRepeat}");
+                }
+                mapHistory.Add(flatMap);
+
+
+
+                var newMap = new char[mapSize, mapSize];
                 for (var y = 0; y < mapSize; y++)
                 {
                     for (var x = 0; x < mapSize; x++)
                     {
-                        UpdateSurroundings(map, x, y, surroundings);
+                        var surroundings = GetSurroundings(map, x, y);
                         (int treeCount, int lumberCount) = CountSurroundings(surroundings);
 
                         switch (map[x, y])
@@ -45,37 +87,19 @@ namespace part1
                 }
 
                 map = newMap;
-
-                var percentage = Math.Round(minute / (double)totalMinutes * 100.0, 3);
-                if (percentage > lastPercentage)
-                {
-                    int currentAnswer = ComputeAnswer(map);
-                    Console.WriteLine($"{percentage}% done, current answer would be {currentAnswer} ({minute} of {totalMinutes})");
-                    lastPercentage = percentage;
-                }
-
-                //LogMap(map, minute + 1);
             }
 
-            int answer = ComputeAnswer(map);
+            var answer = ComputeAnswer(map);
             Console.WriteLine($"The answer is {answer}");
-        }
-
-        private static (int treeCount, int lumberCount) CountSurroundings(char[] surroundings)
-        {
-            var treeCount = surroundings.Count(s => s == '|');
-            var lumberCount = surroundings.Count(s => s == '#');
-
-            return (treeCount, lumberCount);
         }
 
         private static int ComputeAnswer(char[,] map)
         {
             var lumberCount = 0;
             var treeCount = 0;
-            for (var y = 0; y < mapSize; y++)
+            for (var y = 0; y < map.GetLength(1); y++)
             {
-                for (var x = 0; x < mapSize; x++)
+                for (var x = 0; x < map.GetLength(0); x++)
                 {
                     switch (map[x, y])
                     {
@@ -94,6 +118,14 @@ namespace part1
             return answer;
         }
 
+        private static (int treeCount, int lumberCount) CountSurroundings(char[] surroundings)
+        {
+            var treeCount = surroundings.Count(s => s == '|');
+            var lumberCount = surroundings.Count(s => s == '#');
+
+            return (treeCount, lumberCount);
+        }
+
         private static readonly Offset[] Offsets = {
             new Offset(0, -1),
             new Offset(1, -1),
@@ -105,21 +137,22 @@ namespace part1
             new Offset(-1, -1)
             };
 
-        private static void UpdateSurroundings(char[,] map, int x, int y, char[] surroundings)
+        private static char[] GetSurroundings(char[,] map, int x, int y)
         {
-            for (int i = 0; i < Offsets.Length; i++)
+            var surroundings = new List<char>();
+
+            foreach (var offset in Offsets)
             {
-                var nearbyX = x + Offsets[i].X;
-                var nearbyY = y + Offsets[i].Y;
+                var nearbyX = x + offset.X;
+                var nearbyY = y + offset.Y;
                 if (nearbyX < 0 || nearbyX >= mapSize || nearbyY < 0 || nearbyY >= mapSize)
                 {
-                    surroundings[i] = 'x';
+                    continue;
                 }
-                else
-                {
-                    surroundings[i] = map[nearbyX, nearbyY];
-                }
+                surroundings.Add(map[nearbyX, nearbyY]);
             }
+
+            return surroundings.ToArray();
         }
 
         private static char[,] ParseMap(string[] lines)
@@ -141,10 +174,10 @@ namespace part1
         private static void LogMap(char[,] map, int minute)
         {
             Console.WriteLine($"Map after {minute} minutes");
-            for (var y = 0; y < map.GetLength(1); y++)
+            for (var y = 0; y < mapSize; y++)
             {
                 var line = "";
-                for (var x = 0; x < map.GetLength(0); x++)
+                for (var x = 0; x < mapSize; x++)
                 {
                     line += map[x, y];
                 }
