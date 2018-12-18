@@ -57,16 +57,12 @@ namespace part1
                     }
 
                     //Check if we can stretch our arms far enough to hit our enemy.
-                    if (Distance(player.Position, nearestReachableEnemy.Position) > 1)
+                    if (!IsInHittingRange(player, nearestReachableEnemy))
                     {
-                        var currentPosition = player.Position;
-                        var newPosition = player.MoveToNearestEnemyPosition(nearestReachableEnemy, nearestReachableEnemyPosition, grid);
-
-                        grid[currentPosition.X, currentPosition.Y] = '.';
-                        grid[newPosition.X, newPosition.Y] = player.Type;
+                        MoveTowardsEnemyPosition(player, nearestReachableEnemyPosition, grid);
                     }
 
-                    if (Distance(player.Position, nearestReachableEnemy.Position) > 1)
+                    if (!IsInHittingRange(player, nearestReachableEnemy))
                     {
                         //Keep on walking, closing in on our target!
                         continue;
@@ -87,11 +83,25 @@ namespace part1
 
                 turns++;
 
-                //LogGrid(grid, players, turns);
+                LogGrid(grid, players, turns);
             }
         }
 
-        private static bool HasWinner(IList<Player> players)
+        private static void MoveTowardsEnemyPosition(Player player, Position enemyPosition, char[,] grid)
+        {
+            var oldPosition = player.Position;
+            var newPosition = player.MoveToNearestEnemyPosition(enemyPosition, grid);
+
+            grid[oldPosition.X, oldPosition.Y] = '.';
+            grid[newPosition.X, newPosition.Y] = player.Type;
+        }
+
+        private static bool IsInHittingRange(Player player, Player nearestReachableEnemy)
+        {
+            return Distance(player.Position, nearestReachableEnemy.Position) <= 1;
+        }
+
+        private static bool HasWinner(IEnumerable<Player> players)
         {
             var alivePlayers = players.Where(x => !x.IsDead).ToList();
 
@@ -190,7 +200,7 @@ namespace part1
             {
                 var pathGrid = CreatePathFindingGrid(grid, enemy);
 
-                var offsets = new[] { new Offset(0, -1), new Offset(1, 0), new Offset(0, 1), new Offset(-1, 0) };
+                var offsets = new[] { new Offset(0, -1), new Offset(-1, 0), new Offset(1, 0), new Offset(0, 1) };
                 foreach (var offset in offsets)
                 {
                     var destination = new Position(enemy.Position.X + offset.X, enemy.Position.Y + offset.Y);
@@ -199,8 +209,10 @@ namespace part1
                     //No clear path to this enemy found
                     if (pathToEnemy.Length == 0) continue;
 
+                    //No shorter path found
                     if (pathToEnemy.Length >= shortestPath) continue;
 
+                    //Register shortest path
                     shortestPath = pathToEnemy.Length;
                     nearestReachableEnemy = enemy;
                     nearestReachableEnemyPosition = destination;
@@ -211,12 +223,11 @@ namespace part1
         }
 
         public Position MoveToNearestEnemyPosition(
-            Player nearestEnemy,
             Position nearestEnemyPosition,
             char[,] grid
             )
         {
-            var shortestPathGrid = CreatePathFindingGrid(grid, nearestEnemy);
+            var shortestPathGrid = CreatePathFindingGrid(grid);
 
             var pathToNearestEnemy =
                 shortestPathGrid.GetPath(Position, nearestEnemyPosition, MovementPatterns.LateralOnly);
@@ -236,7 +247,7 @@ namespace part1
             HitPoints -= 3;
         }
 
-        private static Grid CreatePathFindingGrid(char[,] grid, Player enemy)
+        private static Grid CreatePathFindingGrid(char[,] grid, Player enemy = null)
         {
             var pathGrid = new Grid(grid.GetLength(0), grid.GetLength(1));
 
@@ -251,7 +262,10 @@ namespace part1
                 }
             }
 
-            pathGrid.UnblockCell(enemy.Position);
+            if (enemy != null)
+            {
+                pathGrid.UnblockCell(enemy.Position);
+            }
 
             return pathGrid;
         }
