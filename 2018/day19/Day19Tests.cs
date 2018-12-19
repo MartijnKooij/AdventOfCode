@@ -326,10 +326,22 @@ namespace part1
         public void ExecuteDay19TestProgram()
         {
             var lines = File.ReadAllLines("day19testinput.txt");
-            var (registers, instructionPointer) = challenge.ParseDay19TestInput(lines);
-            var expectedRegister = new[] { 533, 533, 3, 3 };
+            var (instructions, instructionPointer) = challenge.ParseDay19TestInput(lines);
+            var expectedRegister = new[] { 6, 5, 6, 0, 0, 9 };
 
-            var actualRegister = challenge.ExecuteDay19Program(registers, instructionPointer);
+            var actualRegister = challenge.ExecuteDay19Program(instructions, instructionPointer);
+
+            Assert.Equal(expectedRegister, actualRegister);
+        }
+
+        [Fact]
+        public void ExecuteDay19Program()
+        {
+            var lines = File.ReadAllLines("day19input.txt");
+            var (instructions, instructionPointer) = challenge.ParseDay19TestInput(lines);
+            var expectedRegister = new[] { 1968, 1, 979, 256, 978, 979 };
+
+            var actualRegister = challenge.ExecuteDay19Program(instructions, instructionPointer);
 
             Assert.Equal(expectedRegister, actualRegister);
         }

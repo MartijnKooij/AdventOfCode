@@ -70,21 +70,21 @@ namespace part1
                         .ToArray()).ToList();
         }
 
-        public (List<int[]> registers, int instructionPointer) ParseDay19TestInput(IList<string> lines)
+        public (List<int[]> instructions, int instructionPointer) ParseDay19TestInput(IList<string> lines)
         {
-            List<int[]> registers = new List<int[]>();
+            var instructions = new List<int[]>();
             var instructionPointer = int.Parse(lines[0].Substring(4));
 
-            for (int i = 1; i < lines.Count; i++)
+            for (var i = 1; i < lines.Count; i++)
             {
-                var instructions = lines[i].Split(' ');
-                var opCodeIndex = opCodeNames[instructions[0]].ToString() + " ";
-                instructions[0] = opCodeIndex;
+                var instruction = lines[i].Split(' ');
+                var opCodeIndex = opCodeNames[instruction[0]] + " ";
+                instruction[0] = opCodeIndex;
 
-                registers.Add(instructions.Select(x => int.Parse(x.Trim())).ToArray());
+                instructions.Add(instruction.Select(x => int.Parse(x.Trim())).ToArray());
             }
 
-            return (registers, instructionPointer);
+            return (instructions, instructionPointer);
         }
 
         public Dictionary<int, int> GetPossibleOpCodes(List<TestData> testData)
@@ -172,31 +172,33 @@ namespace part1
             return currentRegister;
         }
 
-        public int[] ExecuteDay19Program(List<int[]> registers, int instructionPointer)
+        public int[] ExecuteDay19Program(List<int[]> instructions, int instructionPointer)
         {
-            var currentRegister = new[] { 0, 0, 0, 0, 0 };
-            var currentInsructionPointer = instructionPointer;
-            while (currentInsructionPointer >= 0 && currentInsructionPointer < registers.Count) {
-                var register = registers[currentInsructionPointer];
+            var currentRegister = new[] { 0, 0, 0, 0, 0, 0 };
+            var currentInstructionPointer = currentRegister[instructionPointer];
+            while (currentInstructionPointer >= 0 && currentInstructionPointer < instructions.Count)
+            {
+                var instruction = instructions[currentInstructionPointer];
 
-                register[0] = currentInsructionPointer;
+                currentRegister[instructionPointer] = currentInstructionPointer;
 
-                var operation = Operations[opCodeIndices[register[1]]];
-                currentRegister = operation(currentRegister, register);
+                var operation = Operations[opCodeIndices[instruction[0]]];
+                currentRegister = operation(currentRegister, instruction);
 
-                currentInsructionPointer = register[0];
-                currentInsructionPointer++;
+                currentInstructionPointer = currentRegister[instructionPointer];
+                currentInstructionPointer++;
             }
 
             return currentRegister;
         }
 
 
-        private readonly Dictionary<string, int> opCodeNames = new Dictionary<string, int> {
-             {"borr", 6}, {"addr", 0}, {"eqrr", 15}, {"addi", 1}, {"eqri", 14}, {"eqir", 13},
-             {"gtri", 11}, {"mulr", 2}, {"setr", 8}, {"gtir", 10}, {"muli", 3}, {"banr", 4},
-             {"seti", 9}, {"gtrr", 12}, {"bani", 5}, {"bori", 7} };
-
+        private readonly Dictionary<string, int> opCodeNames = new Dictionary<string, int>
+        {
+            {"borr", 0}, {"addr", 1}, {"eqrr", 2}, {"addi", 3}, {"eqri", 4}, {"eqir", 5},
+            {"gtri", 6}, {"mulr", 7}, {"setr", 8}, {"gtir", 9}, {"muli", 10}, {"banr", 11},
+            {"seti", 12}, {"gtrr", 13}, {"bani", 14}, {"bori", 15}
+        };
 
         private readonly int[] opCodeIndices = { 6, 0, 15, 1, 14, 13, 11, 2, 8, 10, 3, 4, 9, 12, 5, 7 };
 
@@ -341,6 +343,16 @@ namespace part1
 
         private static int[] BuildOperationResult(IReadOnlyList<int> input, int register, int operationResult)
         {
+            if (input.Count == 4)
+            {
+                return new[]
+                {
+                    register == 0 ? operationResult : input[0],
+                    register == 1 ? operationResult : input[1],
+                    register == 2 ? operationResult : input[2],
+                    register == 3 ? operationResult : input[3]
+                };
+            }
 
             return new[]
             {
