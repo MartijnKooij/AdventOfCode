@@ -11,19 +11,19 @@ namespace part1
     {
         public static void Main()
         {
-            // var expectedAnswers = new[] { 27730, 36334, 39514, 27755, 28944, 18740, 12744, 10430, 10234, 9933, 10234 };
-            // for (var testFile = 0; testFile < expectedAnswers.Length; testFile++)
-            // {
-            //     var lines = File.ReadAllLines($"testinput{testFile}.txt");
-            //     var answer = Battle(lines);
-            //     if (answer != expectedAnswers[testFile])
-            //     {
-            //         throw new InvalidOperationException($"Test input {testFile} did not produce the expected answer of {expectedAnswers[testFile]} but gave {answer}");
-            //     }
-            // }
+            var expectedAnswers = new[] { 27730, 36334, 39514, 27755, 28944, 18740, 12744, 10430, 10234, 9933, 10234, 322326, 140 };
+            for (var testFile = 0; testFile < expectedAnswers.Length; testFile++)
+            {
+                var lines = File.ReadAllLines($"testinput{testFile}.txt");
+                var answer = Battle(lines);
+                if (answer != expectedAnswers[testFile])
+                {
+                    throw new InvalidOperationException($"Test input {testFile} did not produce the expected answer of {expectedAnswers[testFile]} but gave {answer}");
+                }
+            }
 
-            var lines = File.ReadAllLines($"testinput10.txt");
-            Battle(lines);
+            // var lines = File.ReadAllLines("input.txt");
+            // Battle(lines);
         }
 
         private static int Battle(IReadOnlyList<string> input)
@@ -80,7 +80,7 @@ namespace part1
 
                 turns++;
 
-                LogGrid(grid, players, turns);
+                //LogGrid(grid, players, turns);
             }
         }
 
@@ -188,10 +188,12 @@ namespace part1
 
     public class Player
     {
-        public char Type { get; set; }
-        public Position Position { get; set; }
-        public int HitPoints { get; set; }
+        public char Type { get; private set; }
+        public Position Position { get; private set; }
+        public int HitPoints { get; private set; }
         public bool IsDead => HitPoints <= 0;
+
+        private Guid id = Guid.NewGuid();
 
         public (Position position, Player player) GetNearestReachableEnemy(
             IReadOnlyList<Player> players,
@@ -201,23 +203,7 @@ namespace part1
         {
             var offsets = new[] { new Offset(0, -1), new Offset(-1, 0), new Offset(1, 0), new Offset(0, 1) };
 
-            var enemies = players.Where(x => x.Type != Type && !x.IsDead);
-            var targetPositionedEnemies = new List<Player>();
-            foreach (var enemy in enemies)
-            {
-                targetPositionedEnemies.AddRange(offsets
-                    .Select(offset => new Player
-                    {
-                        HitPoints = enemy.HitPoints,
-                        Type = enemy.Type,
-                        Position = new Position(enemy.Position.X + offset.X, enemy.Position.Y + offset.Y)
-                    })
-                    .Where(targetEnemy => grid[targetEnemy.Position.X, targetEnemy.Position.Y] != '#'));
-            }
-
-            enemies = targetPositionedEnemies.OrderBy(x => weakestFirst ? x.HitPoints : 0)
-                .ThenBy(x => x.Position.Y)
-                .ThenBy(x => x.Position.X);
+            var enemies = GetEnemiesByReadingOrder(players, grid, weakestFirst, offsets);
 
             var shortestPath = int.MaxValue;
             Player nearestReachableEnemy = null;
@@ -271,6 +257,50 @@ namespace part1
         public void Hit()
         {
             HitPoints -= 3;
+        }
+
+        private IEnumerable<Player> GetEnemiesByReadingOrder(
+            IReadOnlyList<Player> players,
+            char[,] grid,
+            bool weakestFirst,
+            Offset[] offsets
+        )
+        {
+            var targetPositionedEnemies = new List<Player>();
+            foreach (var enemy in players.Where(x => x.Type != Type && !x.IsDead))
+            {
+                targetPositionedEnemies.AddRange(
+                    offsets.Select(
+                            offset => enemy.CloneWithOffset(offset))
+                        .Where(
+                            targetEnemy => grid[targetEnemy.Position.X, targetEnemy.Position.Y] != '#'));
+            }
+
+            var enemies = new List<Player>();
+            foreach (var enemy in targetPositionedEnemies.OrderBy(x => weakestFirst ? x.HitPoints : 0)
+                .ThenBy(x => x.Position.Y)
+                .ThenBy(x => x.Position.X))
+            {
+                if (enemies.All(x => x.id != enemy.id))
+                {
+                    enemies.Add(players.Single(x => x.id == enemy.id));
+                }
+            }
+
+            return enemies;
+        }
+
+        private Player CloneWithOffset(Offset offset)
+        {
+            var targetEnemy = new Player
+            {
+                id = id,
+                HitPoints = HitPoints,
+                Type = Type,
+                Position = new Position(Position.X + offset.X, Position.Y + offset.Y)
+            };
+
+            return targetEnemy;
         }
 
         private static Grid CreatePathFindingGrid(char[,] grid, Player enemy = null)
