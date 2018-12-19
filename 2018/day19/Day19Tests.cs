@@ -304,13 +304,34 @@ namespace part1
         public void ExecuteProgram()
         {
             var lines = File.ReadAllLines("input.txt");
-            var testInput = challenge.ParseTestInput(lines);
+            var instructions = challenge.ParseTestInput(lines);
             var expectedRegister = new[] { 533, 533, 3, 3 };
 
-            var actualRegister = challenge.ExecuteProgram(testInput);
+            var actualRegister = challenge.ExecuteProgram(instructions);
 
             Assert.Equal(expectedRegister, actualRegister);
         }
 
+        [Fact]
+        public void ParseDay19Input()
+        {
+            var lines = File.ReadAllLines("day19testinput.txt");
+            var (registers, instructionPointer) = challenge.ParseDay19TestInput(lines);
+
+            Assert.Equal(0, instructionPointer);
+            Assert.Equal(7, registers.Count);
+        }
+
+        [Fact]
+        public void ExecuteDay19TestProgram()
+        {
+            var lines = File.ReadAllLines("day19testinput.txt");
+            var (registers, instructionPointer) = challenge.ParseDay19TestInput(lines);
+            var expectedRegister = new[] { 533, 533, 3, 3 };
+
+            var actualRegister = challenge.ExecuteDay19Program(registers, instructionPointer);
+
+            Assert.Equal(expectedRegister, actualRegister);
+        }
     }
 }
