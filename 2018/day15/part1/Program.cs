@@ -11,19 +11,19 @@ namespace part1
     {
         public static void Main()
         {
-            // var expectedAnswers = new[] { 27730, 36334, 39514, 27755, 28944, 18740, 12744, 10430, 10234, 9933, 10234 };
-            // for (var testFile = 0; testFile < expectedAnswers.Length; testFile++)
-            // {
-            //     var lines = File.ReadAllLines($"testinput{testFile}.txt");
-            //     var answer = Battle(lines);
-            //     if (answer != expectedAnswers[testFile])
-            //     {
-            //         throw new InvalidOperationException($"Test input {testFile} did not produce the expected answer of {expectedAnswers[testFile]} but gave {answer}");
-            //     }
-            // }
+            var expectedAnswers = new[] { 27730, 36334, 39514, 27755, 28944, 18740, 12744, 10430, 10234, 9933, 10234, 322326, 140 };
+            for (var testFile = 0; testFile < expectedAnswers.Length; testFile++)
+            {
+                var lines = File.ReadAllLines($"testinput{testFile}.txt");
+                var answer = Battle(lines);
+                if (answer != expectedAnswers[testFile])
+                {
+                    throw new InvalidOperationException($"Test input {testFile} did not produce the expected answer of {expectedAnswers[testFile]} but gave {answer}");
+                }
+            }
 
-            var lines = File.ReadAllLines($"testinput11.txt");
-            Battle(lines);
+            // var lines = File.ReadAllLines("input.txt");
+            // Battle(lines);
         }
 
         private static int Battle(IReadOnlyList<string> input)
@@ -80,7 +80,7 @@ namespace part1
 
                 turns++;
 
-                LogGrid(grid, players, turns);
+                //LogGrid(grid, players, turns);
             }
         }
 
@@ -188,11 +188,12 @@ namespace part1
 
     public class Player
     {
-        public char Type { get; set; }
-        public Position Position { get; set; }
-        public int HitPoints { get; set; }
+        public char Type { get; private set; }
+        public Position Position { get; private set; }
+        public int HitPoints { get; private set; }
         public bool IsDead => HitPoints <= 0;
-        public Guid Id { get; set; } = Guid.NewGuid();
+
+        private Guid id = Guid.NewGuid();
 
         public (Position position, Player player) GetNearestReachableEnemy(
             IReadOnlyList<Player> players,
@@ -280,20 +281,20 @@ namespace part1
                 .ThenBy(x => x.Position.Y)
                 .ThenBy(x => x.Position.X))
             {
-                if (enemies.All(x => x.Id != enemy.Id))
+                if (enemies.All(x => x.id != enemy.id))
                 {
-                    enemies.Add(players.Single(x => x.Id == enemy.Id));
+                    enemies.Add(players.Single(x => x.id == enemy.id));
                 }
             }
 
             return enemies;
         }
 
-        public Player CloneWithOffset(Offset offset)
+        private Player CloneWithOffset(Offset offset)
         {
             var targetEnemy = new Player
             {
-                Id = Id,
+                id = id,
                 HitPoints = HitPoints,
                 Type = Type,
                 Position = new Position(Position.X + offset.X, Position.Y + offset.Y)
