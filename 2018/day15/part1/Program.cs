@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace part1
 {
@@ -11,19 +12,19 @@ namespace part1
     {
         public static void Main()
         {
-            var expectedAnswers = new[] { 27730, 36334, 39514, 27755, 28944, 18740, 12744, 10430, 10234, 9933, 10234, 322326, 140 };
-            for (var testFile = 0; testFile < expectedAnswers.Length; testFile++)
-            {
-                var lines = File.ReadAllLines($"testinput{testFile}.txt");
-                var answer = Battle(lines);
-                if (answer != expectedAnswers[testFile])
-                {
-                    throw new InvalidOperationException($"Test input {testFile} did not produce the expected answer of {expectedAnswers[testFile]} but gave {answer}");
-                }
-            }
+            // var expectedAnswers = new[] { 27730, 36334, 39514, 27755, 28944, 18740, 12744, 10430, 10234, 9933, 10234, 322326, 140, 1 };
+            // for (var testFile = 0; testFile < expectedAnswers.Length; testFile++)
+            // {
+            //     var lines = File.ReadAllLines($"testinput{testFile}.txt");
+            //     var answer = Battle(lines);
+            //     if (answer != expectedAnswers[testFile])
+            //     {
+            //         throw new InvalidOperationException($"Test input {testFile} did not produce the expected answer of {expectedAnswers[testFile]} but gave {answer}");
+            //     }
+            // }
 
-            // var lines = File.ReadAllLines("input.txt");
-            // Battle(lines);
+            var lines = File.ReadAllLines("testinput13.txt");
+            Battle(lines);
         }
 
         private static int Battle(IReadOnlyList<string> input)
@@ -80,7 +81,7 @@ namespace part1
 
                 turns++;
 
-                //LogGrid(grid, players, turns);
+                LogGridToFile(grid, players, turns);
             }
         }
 
@@ -138,6 +139,31 @@ namespace part1
                     Console.Write($"{player.Type}({player.HitPoints})");
                 }
                 Console.WriteLine();
+            }
+        }
+
+        private static void LogGridToFile(char[,] grid, IReadOnlyCollection<Player> players, int turns)
+        {
+            //File.WriteAllText("output.txt", "");
+            using (var file = new StreamWriter("output.txt", true, Encoding.ASCII))
+            {
+                file.WriteLine();
+                file.WriteLine($"Turn {turns}");
+                for (var y = 0; y < grid.GetLength(1); y++)
+                {
+                    var line = new StringBuilder();
+                    for (var x = 0; x < grid.GetLength(0); x++)
+                    {
+                        line.Append(grid[x, y]);
+                    }
+
+                    line.Append(" ");
+                    foreach (var player in players.Where(x => x.Position.Y == y))
+                    {
+                        line.Append($"{player.Type}({player.HitPoints})");
+                    }
+                    file.WriteLine(line);
+                }
             }
         }
 
