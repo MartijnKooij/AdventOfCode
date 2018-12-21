@@ -6,26 +6,33 @@ using System.Text;
 
 namespace part1
 {
-    class Program
+    public static class Program
     {
-        static void Main()
-        {
-            var currentX = 500;
-            var currentY = 0;
+        private const string Water = "~";
+        private const string StreamingWater = "|";
+        private const string OpenSpace = ".";
+        private const string Clay = "#";
 
+        private static int minX;
+        private static int minY;
+        private static int maxX;
+        private static int maxY;
+
+        public static void Main()
+        {
             var input = File.ReadAllLines("input.txt");
             var map = new string[610, 1900];
             for (var y = 0; y < map.GetLength(1); y++)
             {
                 for (var x = 0; x < map.GetLength(0); x++)
                 {
-                    if (x == currentX && y == currentY)
+                    if (x == 500 && y == 0)
                     {
                         map[x, y] = "+";
                     }
                     else
                     {
-                        map[x, y] = ".";
+                        map[x, y] = OpenSpace;
                     }
 
                 }
@@ -55,62 +62,145 @@ namespace part1
                     foreach (var y in yValues)
                     {
                         if (!allYValues.Contains(y)) allYValues.Add(y);
-                        map[x, y] = "#";
+                        map[x, y] = Clay;
                     }
                 }
             }
 
-            var minY = 1;
-            var maxY = allYValues.Max();
-            var minX = allXValues.Min();
-            var maxX = allXValues.Max();
+            minY = 1;
+            maxY = allYValues.Max();
+            minX = allXValues.Min();
+            maxX = allXValues.Max();
 
-            currentX = currentX + 0;
-            currentY = currentY + 1;
-            map[currentX, currentY] = "|";
+            map[500, 1] = StreamingWater;
             var changes = new List<Change>
             {
-                new Change("|", (currentX, currentY))
+                new Change(StreamingWater, (500, 1))
             };
             var keepLooping = true;
             while (keepLooping)
             {
-                keepLooping = ProcessChanges(changes, map, currentX, currentY, minX, minY, maxX, maxY);
+                keepLooping = ProcessChanges(changes, map);
             }
 
             LogMap(map, allXValues, allYValues);
         }
 
-        private static bool ProcessChanges(List<Change> changes, string[,] map, int currentX, int currentY, int minX, int minY, int maxX, int maxY)
+        private static bool ProcessChanges(List<Change> changes, string[,] map)
         {
-            for (int c = changes.Count - 1; c >= 0; c--)
+            for (var changeIndex = changes.Count - 1; changeIndex >= 0; changeIndex--)
             {
-                Change change = changes[c];
-                if (change.Value == "|")
+                var change = changes[changeIndex];
+                switch (change.Value)
                 {
-                    var newX = change.Location.x;
-                    var newY = change.Location.y + 1;
+                    case StreamingWater:
+                        {
+                            if (IsOnTopOfSolid(map, change.Location.x, change.Location.y))
+                            {
+                                RegisterChange(changes, map, change.Location.x, change.Location.y, Water);
+                            }
+                            else
+                            {
+                                RegisterChange(changes, map, change.Location.x, change.Location.y + 1, StreamingWater);
+                            }
 
-                    if (!CheckBounds(newX, newY, minX, minY, maxX, maxY))
-                    {
-                        changes.Remove(change);
-                        continue;
-                    }
-                    map[newX, newY] = "|";
+                            break;
+                        }
+                    case Water:
+                        {
+                            if (IsOnTopOfSolid(map, change.Location.x, change.Location.y))
+                            {
+                                if (IsRightOfOpenSpace(map, change))
+                                {
+                                    RegisterChange(changes, map, change.Location.x - 1, change.Location.y, Water);
+                                }
+                                if (IsLeftOfOpenSpace(map, change))
+                                {
+                                    RegisterChange(changes, map, change.Location.x + 1, change.Location.y, Water);
+                                }
+                                if (IsNextToClay(map, change) && IsBelowStreamingWater(map, change))
+                                {
+                                    RegisterChange(changes, map, change.Location.x, change.Location.y - 1, Water);
+                                }
+                            }
+                            else if (IsOnTopOfOpenSpace(map, change))
+                            {
+                                RegisterChange(changes, map, change.Location.x, change.Location.y, StreamingWater);
+                            }
 
-                    changes.Add(new Change("|", (newX, newY)));
-                    changes.Remove(change);
+                            break;
+                        }
                 }
-                else if (change.Value == "~")
-                {
-                    if (map[currentX, currentY + 1] == "#")
-                }
+
+                //Remove this change from the queue
+                Console.Write(" " + change.Location.y);
+                changes.Remove(change);
             }
 
             return changes.Any();
         }
 
-        private static bool CheckBounds(int newX, int newY, int minX, int minY, int maxX, int maxY)
+        private static bool IsBelowStreamingWater(string[,] map, Change change)
+        {
+            return map[change.Location.x, change.Location.y - 1] == StreamingWater;
+        }
+
+        private static bool IsBelowOpenSpace(string[,] map, Change change)
+        {
+            return map[change.Location.x, change.Location.y - 1] == OpenSpace;
+        }
+
+        private static bool HasWaterOnBothSides(string[,] map, Change change)
+        {
+            return map[change.Location.x - 1, change.Location.y] == Water &&
+                   map[change.Location.x + 1, change.Location.y] == Water;
+        }
+
+        private static bool IsNextToClay(string[,] map, Change change)
+        {
+            return map[change.Location.x - 1, change.Location.y] == Clay ||
+                   map[change.Location.x + 1, change.Location.y] == Clay;
+        }
+
+        private static bool IsNextToWater(string[,] map, Change change)
+        {
+            return map[change.Location.x - 1, change.Location.y] == Water ||
+                   map[change.Location.x + 1, change.Location.y] == Water;
+        }
+
+        private static bool IsLeftOfOpenSpace(string[,] map, Change change)
+        {
+            return map[change.Location.x + 1, change.Location.y] == OpenSpace;
+        }
+
+        private static bool IsRightOfOpenSpace(string[,] map, Change change)
+        {
+            return map[change.Location.x - 1, change.Location.y] == OpenSpace;
+        }
+
+        private static bool IsOnTopOfOpenSpace(string[,] map, Change change)
+        {
+            return map[change.Location.x, change.Location.y + 1] == OpenSpace;
+        }
+
+        private static bool IsOnTopOfSolid(string[,] map, int x, int y)
+        {
+            return map[x, y + 1] == Clay || map[x, y + 1] == Water;
+        }
+
+        private static void RegisterChange(ICollection<Change> changes, string[,] map, int newX, int newY, string newChange)
+        {
+            if (!CheckBounds(newX, newY))
+            {
+                return;
+            }
+
+            map[newX, newY] = newChange;
+
+            changes.Add(new Change(newChange, (newX, newY)));
+        }
+
+        private static bool CheckBounds(int newX, int newY)
         {
             return newX >= minX && newY >= minY && newX <= maxX && newY <= maxY;
         }
@@ -124,10 +214,10 @@ namespace part1
             {
                 for (var y = 0; y < allYValues.Max() + 1; y++)
                 {
-                    var line = "";
+                    var line = new StringBuilder();
                     for (var x = allXValues.Min() - 1; x < allXValues.Max() + 1; x++)
                     {
-                        line += map[x, y];
+                        line.Append(map[x, y]);
                     }
                     file.WriteLine(line);
                 }
@@ -136,8 +226,8 @@ namespace part1
 
         private static int[] ParseValue(string value)
         {
-            value = value.Trim().Replace("x=", "").Replace("y=", "").Replace("..", ".");
-            var values = value.Split('.').Select(x => int.Parse(x));
+            value = value.Trim().Replace("x=", "").Replace("y=", "").Replace("..", OpenSpace);
+            var values = value.Split('.').Select(int.Parse);
             var valueList = values.ToList();
 
             if (valueList.Count <= 1)
