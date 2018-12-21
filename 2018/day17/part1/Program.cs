@@ -10,13 +10,16 @@ namespace part1
     {
         static void Main()
         {
+            int currentX = 500;
+            int currentY = 0;
+
             var input = File.ReadAllLines("input.txt");
             var map = new string[610, 1900];
             for (var y = 0; y < map.GetLength(1); y++)
             {
                 for (var x = 0; x < map.GetLength(0); x++)
                 {
-                    if (x == 500 && y == 0)
+                    if (x == currentX && y == currentY)
                     {
                         map[x, y] = "+";
                     }
@@ -57,54 +60,27 @@ namespace part1
                 }
             }
 
-            var runs = 0;
+            int yMin = 1;
             int yMax = allYValues.Max();
             int xMin = allXValues.Min();
             int xMax = allXValues.Max();
+
+            currentX = currentX + 0;
+            currentY = currentY + 1;
+            map[currentX, currentY] = "|";
+            var changes = new Dictionary<string, (int x, int y)>();
+            changes.Add("|", (currentX, currentY));
             while (true)
             {
-                for (var y = 1; y < yMax + 1; y++)
-                {
-                    for (var x = xMin - 1; x < xMax + 1; x++)
-                    {
-                        // On clay
-                        if (map[x, y] == "#") continue;
-
-                        // Below source or at stream
-                        if (map[x, y - 1] == "+" || map[x, y - 1] == "|")
-                        {
-                            map[x, y] = "|";
-                        }
-
-                        // At stream or at standing water
-                        if (map[x, y] == "|" || map[x, y] == "~")
-                        {
-                            if (map[x, y + 1] == "#")
-                            {
-                                map[x, y] = "~";
-                            }
-                        }
-
-                        //Besides stream or standing water
-                        if (map[x - 1, y] == "|" || map[x + 1, y] == "|" || map[x - 1, y] == "~" || map[x + 1, y] == "~")
-                        {
-                            // And on top of clay or standing water
-                            if (map[x, y + 1] == "#" || map[x, y + 1] == "~")
-                            {
-                                // And with walls besides me
-                                
-                                map[x, y] = "~";
-                            }
-                        }
-                    }
-                }
-
-                runs++;
-                if (runs > 100) break;
+                ProcessChanges(changes, map, currentX, currentY, xMin, yMin, xMax, yMax);
             }
 
-
             LogMap(map, allXValues, allYValues);
+        }
+
+        private static void ProcessChanges(Dictionary<string, (int x, int y)> changes, string[,] map, int currentX, int currentY, int xMin, int yMin, int xMax, int yMax)
+        {
+            throw new NotImplementedException();
         }
 
         private static void LogMap(string[,] map, List<int> allXValues, List<int> allYValues)
