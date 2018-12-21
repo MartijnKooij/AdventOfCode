@@ -68,9 +68,9 @@ namespace part1
             currentX = currentX + 0;
             currentY = currentY + 1;
             map[currentX, currentY] = "|";
-            var changes = new Dictionary<string, (int x, int y)>
+            var changes = new List<Change>
             {
-                {"|", (currentX, currentY)}
+                new Change("|", (currentX, currentY))
             };
             var keepLooping = true;
             while (keepLooping)
@@ -81,18 +81,20 @@ namespace part1
             LogMap(map, allXValues, allYValues);
         }
 
-        private static bool ProcessChanges(Dictionary<string, (int x, int y)> changes, string[,] map, int currentX, int currentY, int xMin, int yMin, int xMax, int yMax)
+        private static bool ProcessChanges(List<Change> changes, string[,] map, int currentX, int currentY, int xMin, int yMin, int xMax, int yMax)
         {
-            foreach (var change in changes)
+            for (int c = changes.Count - 1; c >= 0 ; c--)
             {
-                if (change.Key == "|")
+                Change change = changes[c];
+                if (change.Value == "|")
                 {
-                    var newX = change.Value.x;
-                    var newY = change.Value.y + 1;
+                    var newX = change.Location.x;
+                    var newY = change.Location.y + 1;
                     map[newX, newY] = "|";
+
+                    changes.Remove(change);
                 }
             }
-            changes.Clear();
 
             return changes.Any();
         }
@@ -135,5 +137,17 @@ namespace part1
 
             return valueList.ToArray();
         }
+    }
+
+    public class Change
+    {
+        public Change(string value, (int x, int y) location)
+        {
+            Value = value;
+            Location = location;
+        }
+
+        public string Value { get; set; }
+        public (int x, int y) Location { get; set; }
     }
 }
