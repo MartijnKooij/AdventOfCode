@@ -10,8 +10,8 @@ namespace part1
     {
         static void Main()
         {
-            int currentX = 500;
-            int currentY = 0;
+            var currentX = 500;
+            var currentY = 0;
 
             var input = File.ReadAllLines("input.txt");
             var map = new string[610, 1900];
@@ -60,27 +60,38 @@ namespace part1
                 }
             }
 
-            int yMin = 1;
-            int yMax = allYValues.Max();
-            int xMin = allXValues.Min();
-            int xMax = allXValues.Max();
+            var yMin = 1;
+            var yMax = allYValues.Max();
+            var xMin = allXValues.Min();
+            var xMax = allXValues.Max();
 
             currentX = currentX + 0;
             currentY = currentY + 1;
             map[currentX, currentY] = "|";
-            var changes = new Dictionary<string, (int x, int y)>();
-            changes.Add("|", (currentX, currentY));
-            while (true)
+            var changes = new Dictionary<string, (int x, int y)>
             {
-                ProcessChanges(changes, map, currentX, currentY, xMin, yMin, xMax, yMax);
+                {"|", (currentX, currentY)}
+            };
+            var keepLooping = true;
+            while (keepLooping)
+            {
+                keepLooping = ProcessChanges(changes, map, currentX, currentY, xMin, yMin, xMax, yMax);
             }
 
             LogMap(map, allXValues, allYValues);
         }
 
-        private static void ProcessChanges(Dictionary<string, (int x, int y)> changes, string[,] map, int currentX, int currentY, int xMin, int yMin, int xMax, int yMax)
+        private static bool ProcessChanges(Dictionary<string, (int x, int y)> changes, string[,] map, int currentX, int currentY, int xMin, int yMin, int xMax, int yMax)
         {
-            throw new NotImplementedException();
+            foreach (var change in changes)
+            {
+                if (change.Key == "|")
+                {
+
+                }
+            }
+
+            return changes.Any();
         }
 
         private static void LogMap(string[,] map, List<int> allXValues, List<int> allYValues)
