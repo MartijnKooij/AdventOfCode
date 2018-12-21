@@ -174,7 +174,7 @@ namespace part1
 
         public int[] ExecuteDay19Program(List<int[]> instructions, int instructionPointer)
         {
-            var currentRegister = new[] { 0, 0, 0, 0, 0, 0 };
+            var currentRegister = new[] { 1, 0, 0, 0, 0, 0 };
             var currentInstructionPointer = currentRegister[instructionPointer];
             while (currentInstructionPointer >= 0 && currentInstructionPointer < instructions.Count)
             {
