@@ -60,10 +60,10 @@ namespace part1
                 }
             }
 
-            var yMin = 1;
-            var yMax = allYValues.Max();
-            var xMin = allXValues.Min();
-            var xMax = allXValues.Max();
+            var minY = 1;
+            var maxY = allYValues.Max();
+            var minX = allXValues.Min();
+            var maxX = allXValues.Max();
 
             currentX = currentX + 0;
             currentY = currentY + 1;
@@ -75,28 +75,39 @@ namespace part1
             var keepLooping = true;
             while (keepLooping)
             {
-                keepLooping = ProcessChanges(changes, map, currentX, currentY, xMin, yMin, xMax, yMax);
+                keepLooping = ProcessChanges(changes, map, currentX, currentY, minX, minY, maxX, maxY);
             }
 
             LogMap(map, allXValues, allYValues);
         }
 
-        private static bool ProcessChanges(List<Change> changes, string[,] map, int currentX, int currentY, int xMin, int yMin, int xMax, int yMax)
+        private static bool ProcessChanges(List<Change> changes, string[,] map, int currentX, int currentY, int minX, int minY, int maxX, int maxY)
         {
-            for (int c = changes.Count - 1; c >= 0 ; c--)
+            for (int c = changes.Count - 1; c >= 0; c--)
             {
                 Change change = changes[c];
                 if (change.Value == "|")
                 {
                     var newX = change.Location.x;
                     var newY = change.Location.y + 1;
+                    if (!CheckBounds(newX, newY, minX, minY, maxX, maxY))
+                    {
+                        changes.Remove(change);
+                        continue;
+                    }
                     map[newX, newY] = "|";
 
+                    changes.Add(new Change("|", (newX, newY)));
                     changes.Remove(change);
                 }
             }
 
             return changes.Any();
+        }
+
+        private static bool CheckBounds(int newX, int newY, int minX, int minY, int maxX, int maxY)
+        {
+            return newX >= minX && newY >= minY && newX <= maxX && newY <= maxY;
         }
 
         private static void LogMap(string[,] map, List<int> allXValues, List<int> allYValues)
