@@ -90,6 +90,7 @@ namespace part1
                 {
                     var newX = change.Location.x;
                     var newY = change.Location.y + 1;
+
                     if (!CheckBounds(newX, newY, minX, minY, maxX, maxY))
                     {
                         changes.Remove(change);
@@ -99,6 +100,10 @@ namespace part1
 
                     changes.Add(new Change("|", (newX, newY)));
                     changes.Remove(change);
+                }
+                else if (change.Value == "~")
+                {
+                    if (map[currentX, currentY + 1] == "#")
                 }
             }
 
