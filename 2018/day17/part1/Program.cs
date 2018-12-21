@@ -87,9 +87,12 @@ namespace part1
             {
                 if (change.Key == "|")
                 {
-
+                    var newX = change.Value.x;
+                    var newY = change.Value.y + 1;
+                    map[newX, newY] = "|";
                 }
             }
+            changes.Clear();
 
             return changes.Any();
         }
