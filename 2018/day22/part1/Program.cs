@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -18,9 +19,9 @@ namespace part1
                 new Region {Location = target, GeoIndex = 0, GeoType = GeoType.Target}
             };
 
-            for (var x = 0; x < 10; x++)
+            for (var x = 0; x <= target.x; x++)
             {
-                for (var y = 0; y < 720; y++)
+                for (var y = 0; y <= target.y; y++)
                 {
                     if (regions.Any(r => r.Location.x == x && r.Location.y == y))
                     {
@@ -41,7 +42,18 @@ namespace part1
                 }
             }
 
-            LogMap(regions);
+            LogMap(regions, target);
+            ComputeRisk(regions);
+        }
+
+        private static void ComputeRisk(List<Region> regions)
+        {
+            var risk = 0;
+            foreach (var region in regions.Where(r => r.GeoType != GeoType.Me && r.GeoType != GeoType.Target))
+            {
+                risk += (int)region.GeoType;
+            }
+            Console.WriteLine($"The total risk is {risk}");
         }
 
         private static int GetGeoIndex(IReadOnlyCollection<Region> regions, int x, int y)
@@ -60,10 +72,10 @@ namespace part1
             return neighbor1.ErosionLevel * neighbor2.ErosionLevel;
         }
 
-        private static void LogMap(List<Region> regions)
+        private static void LogMap(List<Region> regions, (int x, int y) target)
         {
             File.WriteAllText("output.txt", "");
-            var map = new string[10, 720];
+            var map = new string[target.x + 1, target.y + 1];
             foreach (var region in regions)
             {
                 map[region.Location.x, region.Location.y] = region.GeoType.GetDescription();
