@@ -20,9 +20,13 @@ namespace part1
             var minZ = bots.Min(b => b.z);
             var maxZ = bots.Max(b => b.z);
 
+            var totalSteps = (maxX - minX) * (maxY - minY) * (maxZ - minZ);
+
             Console.WriteLine($"x({minX},{maxX}) y({minY},{maxY}) z({minZ},{maxZ})");
 
             var mostInRange = 0;
+            var step = 0;
+            var lastPercentage = 0.0;
             var bestLocations = new List<(long x, long y, long z, long r)>();
             for (var x = minX; x < maxX; x++)
             {
@@ -30,6 +34,14 @@ namespace part1
                 {
                     for (var z = minZ; z < maxZ; z++)
                     {
+                        step ++;
+                        var percentage = Math.Round(step / (double)totalSteps * 100.0, 3);
+                        if (percentage > lastPercentage)
+                        {
+                            Console.WriteLine($"{percentage} done ({step} of {totalSteps})");
+                            lastPercentage = percentage;
+                        }
+
                         var location = (x, y, z, 0);
                         var botsInRange = bots.Where(b => Distance(location, b) <= b.r);
                         var inRange = botsInRange.Count();
