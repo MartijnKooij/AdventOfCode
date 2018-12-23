@@ -11,6 +11,57 @@ namespace part1
         static void Main(string[] args)
         {
             var input = File.ReadAllLines("input.txt");
+            List<(long x, long y, long z, long r)> bots = ParseInput(input);
+
+            var minX = bots.Min(b => b.x);
+            var maxX = bots.Max(b => b.x);
+            var minY = bots.Min(b => b.y);
+            var maxY = bots.Max(b => b.y);
+            var minZ = bots.Min(b => b.z);
+            var maxZ = bots.Max(b => b.z);
+
+            Console.WriteLine($"x({minX},{maxX}) y({minY},{maxY}) z({minZ},{maxZ})");
+
+            var mostInRange = 0;
+            var bestLocations = new List<(long x, long y, long z, long r)>();
+            for (var x = minX; x < maxX; x++)
+            {
+                for (var y = minY; y < maxY; y++)
+                {
+                    for (var z = minZ; z < maxZ; z++)
+                    {
+                        var location = (x, y, z, 0);
+                        var botsInRange = bots.Where(b => Distance(location, b) <= b.r);
+                        var inRange = botsInRange.Count();
+
+                        if (inRange > mostInRange)
+                        {
+                            bestLocations.Clear();
+                        }
+                        if (inRange >= mostInRange)
+                        {
+                            mostInRange = inRange;
+                            bestLocations.Add(location);
+                        }
+                    }
+                }
+            }
+
+            Console.WriteLine($"{mostInRange} > {bestLocations.Count()}");
+            var shortestDistance = long.MaxValue;
+            foreach (var location in bestLocations)
+            {
+                var distance = Distance((0, 0, 0, 0), location);
+                if (distance < shortestDistance)
+                {
+                    shortestDistance = distance;
+                }
+            }
+            Console.WriteLine($"The shortest distance is {shortestDistance}");
+        }
+
+        private static List<(long x, long y, long z, long r)> ParseInput(string[] input)
+        {
             var bots = new List<(long x, long y, long z, long r)>();
             foreach (var line in input)
             {
@@ -20,10 +71,7 @@ namespace part1
                 bots.Add((long.Parse(bot[0]), long.Parse(bot[1]), long.Parse(bot[2]), long.Parse(bot[3])));
             }
 
-            var botWithHighestRange = bots.OrderByDescending(b => b.r).First();
-            var botsInRange = bots.Where(b => Distance(botWithHighestRange, b) <= botWithHighestRange.r);
-            
-            Console.WriteLine($"{botsInRange.Count()} of {bots.Count()} nano bots are in range of bot {botWithHighestRange}");
+            return bots;
         }
 
         private static long Distance((long x, long y, long z, long r) source, (long x, long y, long z, long r) destination)
