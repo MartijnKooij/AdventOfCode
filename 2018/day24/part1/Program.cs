@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace part1
 {
@@ -7,7 +8,86 @@ namespace part1
     {
         static void Main(string[] args)
         {
-            var units = new List<Unit>{
+            List<Unit> units = PopulateTestUnits();
+
+            while (units.Where(u => u.Count > 0).Select(u => u.UnitType).Distinct().Count() > 1)
+            {
+                LogUnits(units);
+
+                ResetTargets(units);
+                SelectTargets(units);
+                AttackTargets(units);
+            }
+
+            var winningUnit = units.First(u => u.Count > 0);
+            var winningArmySize = units.Sum(u => u.Count);
+            Console.WriteLine($"The winning army {winningUnit.UnitType} has {winningArmySize} units left");
+        }
+
+        private static void LogUnits(List<Unit> units)
+        {
+            foreach (var unit in units.OrderBy(u => u.UnitType))
+            {
+                Console.WriteLine($"{unit.UnitType} contains {unit.Count} units and does {unit.EffectivePower} damage");
+            }
+            Console.WriteLine();
+        }
+
+        private static void AttackTargets(List<Unit> units)
+        {
+            foreach (var unit in units
+                                    .Where(u => u.TargetId != Guid.Empty && u.Count > 0)
+                                    .OrderByDescending(u => u.Initiative)
+                    )
+            {
+                var enemy = units.Single(u => u.Id == unit.TargetId);
+                enemy.Hit(unit.AttackType, unit.EffectivePower);
+
+                Console.WriteLine($"{unit.UnitType} attacks {enemy.UnitType} dealing {enemy.CalculateDamage(unit.AttackType, unit.EffectivePower)} damage");
+            }
+        }
+
+        private static void SelectTargets(List<Unit> units)
+        {
+            foreach (var unit in units.Where(u => u.Count > 0))
+            {
+                var enemies = units.Where(u => u.UnitType != unit.UnitType && u.TargetedById == Guid.Empty && u.Count > 0)
+                                    .OrderByDescending(u => u.EffectivePower)
+                                    .ThenByDescending(u => u.Initiative);
+
+                var mostDamage = 0;
+                Unit preferredEnemy = null;
+                foreach (var enemy in enemies)
+                {
+                    var damage = enemy.CalculateDamage(unit.AttackType, unit.EffectivePower);
+                    if (damage > mostDamage)
+                    {
+                        preferredEnemy = enemy;
+                        mostDamage = damage;
+                    }
+                }
+                if (mostDamage > 0)
+                {
+                    Console.WriteLine($"{unit.UnitType} with initiative {unit.Initiative} picks {preferredEnemy.UnitType} dealing {preferredEnemy.CalculateDamage(unit.AttackType, unit.EffectivePower)} damage");
+
+                    unit.TargetId = preferredEnemy.Id;
+                    preferredEnemy.TargetedById = unit.Id;
+                }
+            }
+        }
+
+        private static void ResetTargets(List<Unit> units)
+        {
+            foreach (var unit in units)
+            {
+                unit.TargetId = Guid.Empty;
+                unit.TargetedById = Guid.Empty;
+            }
+        }
+
+        private static List<Unit> PopulateUnits()
+        {
+            return new List<Unit>{
                 new Unit(UnitType.ImmuneSystem, 8808, 5616, new[] { AttackType.Ice }, new[] { AttackType.Radiation }, 5, AttackType.Bludgeoning, 10),
                 new Unit(UnitType.ImmuneSystem, 900, 13511, new AttackType[] { }, new[] { AttackType.Radiation }, 107, AttackType.Radiation, 20),
                 new Unit(UnitType.ImmuneSystem, 581, 10346, new[] { AttackType.Slashing }, new[] { AttackType.Radiation }, 140, AttackType.Fire, 14),
@@ -31,10 +111,55 @@ namespace part1
                 new Unit(UnitType.Infection, 785, 14669, new AttackType[] {  }, new AttackType[] {  }, 30, AttackType.Fire, 6),
             };
         }
+
+        private static List<Unit> PopulateTestUnits()
+        {
+            return new List<Unit>{
+                new Unit(UnitType.ImmuneSystem, 17, 5390, new AttackType[] {  }, new[] { AttackType.Radiation, AttackType.Bludgeoning }, 4507, AttackType.Fire, 2),
+                new Unit(UnitType.ImmuneSystem, 989, 1274, new AttackType[] { AttackType.Fire }, new[] { AttackType.Bludgeoning, AttackType.Slashing }, 25, AttackType.Slashing, 3),
+
+                new Unit(UnitType.Infection, 801, 4706, new AttackType[] {  }, new[] { AttackType.Radiation }, 116, AttackType.Bludgeoning, 1),
+                new Unit(UnitType.Infection, 4485, 2961, new AttackType[] { AttackType.Radiation }, new[] { AttackType.Fire, AttackType.Ice }, 12, AttackType.Slashing, 4),
+            };
+        }
     }
 
     class Unit
     {
+        public Guid Id { get; } = Guid.NewGuid();
+        public Guid TargetId { get; set; }
+        public Guid TargetedById { get; set; }
+        public int EffectivePower => Count * Damage;
+        public UnitType UnitType { get; set; }
+        public AttackType AttackType { get; set; }
+        public AttackType[] ImmuneTo { get; set; }
+        public AttackType[] WeakTo { get; set; }
+        public int Count { get; set; }
+        public int HitPoints { get; set; }
+        public int Damage { get; set; }
+        public int Initiative { get; set; }
+
+        internal int CalculateDamage(AttackType attackType, int effectivePower)
+        {
+            if (ImmuneTo.Contains(attackType))
+            {
+                return 0;
+            }
+            if (WeakTo.Contains(attackType))
+            {
+                return 2 * effectivePower;
+            }
+
+            return effectivePower;
+        }
+
+        internal void Hit(AttackType attackType, int effectivePower)
+        {
+            var damage = CalculateDamage(attackType, effectivePower);
+            var unitsKilled = damage / HitPoints;
+            Count = Math.Max(Count - unitsKilled, 0);
+        }
+
         public Unit(UnitType unitType, int count, int hitPoints, AttackType[] immuneTo, AttackType[] weakTo, int damage, AttackType attackType, int initiative)
         {
             this.UnitType = unitType;
@@ -46,20 +171,6 @@ namespace part1
             this.AttackType = attackType;
             this.Initiative = initiative;
         }
-
-        public UnitType UnitType { get; set; }
-        public AttackType AttackType { get; set; }
-
-        public AttackType[] ImmuneTo { get; set; }
-
-        public AttackType[] WeakTo { get; set; }
-
-        public int Count { get; set; }
-
-        public int HitPoints { get; set; }
-
-        public int Damage { get; set; }
-        public int Initiative { get; set; }
     }
 
     enum AttackType
