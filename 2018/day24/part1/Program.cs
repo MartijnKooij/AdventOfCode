@@ -8,7 +8,7 @@ namespace part1
     {
         static void Main(string[] args)
         {
-            List<Unit> units = PopulateTestUnits();
+            List<Unit> units = PopulateUnits();
 
             while (units.Where(u => u.Count > 0).Select(u => u.UnitType).Distinct().Count() > 1)
             {
