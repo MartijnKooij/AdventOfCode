@@ -95,7 +95,7 @@ namespace part1
                 {
                     case StreamingWater:
                         {
-                            if (IsOnTopOfSolid(map, change.Location.x, change.Location.y))
+                            if (IsOnTopOf(map, change, Clay) || IsOnTopOf(map, change, Water))
                             {
                                 RegisterChange(changes, map, change.Location.x, change.Location.y, Water);
                             }
@@ -108,22 +108,22 @@ namespace part1
                         }
                     case Water:
                         {
-                            if (IsOnTopOfSolid(map, change.Location.x, change.Location.y))
+                            if (IsOnTopOf(map, change, Clay) || IsOnTopOf(map, change, Water))
                             {
-                                if (IsRightOfOpenSpace(map, change))
+                                if (IsRightOf(map, change, OpenSpace))
                                 {
                                     RegisterChange(changes, map, change.Location.x - 1, change.Location.y, Water);
                                 }
-                                if (IsLeftOfOpenSpace(map, change))
+                                if (IsLeftOf(map, change, OpenSpace))
                                 {
                                     RegisterChange(changes, map, change.Location.x + 1, change.Location.y, Water);
                                 }
-                                if (IsNextToClay(map, change) && IsBelowStreamingWater(map, change))
+                                if (IsNextTo(map, change, Clay) && IsBelow(map, change, StreamingWater))
                                 {
                                     RegisterChange(changes, map, change.Location.x, change.Location.y - 1, Water);
                                 }
                             }
-                            else if (IsOnTopOfOpenSpace(map, change))
+                            else if (IsOnTopOf(map, change, OpenSpace))
                             {
                                 RegisterChange(changes, map, change.Location.x, change.Location.y, StreamingWater);
                             }
@@ -133,59 +133,42 @@ namespace part1
                 }
 
                 //Remove this change from the queue
-                Console.Write(" " + change.Location.y);
                 changes.Remove(change);
             }
 
             return changes.Any();
         }
 
-        private static bool IsBelowStreamingWater(string[,] map, Change change)
+        private static bool IsBelow(string[,] map, Change change, string element)
         {
-            return map[change.Location.x, change.Location.y - 1] == StreamingWater;
+            return map[change.Location.x, change.Location.y - 1] == element;
         }
 
-        private static bool IsBelowOpenSpace(string[,] map, Change change)
+        private static bool HasElementOnBothSides(string[,] map, Change change, string element)
         {
-            return map[change.Location.x, change.Location.y - 1] == OpenSpace;
+            return map[change.Location.x - 1, change.Location.y] == element &&
+                   map[change.Location.x + 1, change.Location.y] == element;
         }
 
-        private static bool HasWaterOnBothSides(string[,] map, Change change)
+        private static bool IsNextTo(string[,] map, Change change, string element)
         {
-            return map[change.Location.x - 1, change.Location.y] == Water &&
-                   map[change.Location.x + 1, change.Location.y] == Water;
+            return map[change.Location.x - 1, change.Location.y] == element ||
+                   map[change.Location.x + 1, change.Location.y] == element;
         }
 
-        private static bool IsNextToClay(string[,] map, Change change)
+        private static bool IsLeftOf(string[,] map, Change change, string element)
         {
-            return map[change.Location.x - 1, change.Location.y] == Clay ||
-                   map[change.Location.x + 1, change.Location.y] == Clay;
+            return map[change.Location.x + 1, change.Location.y] == element;
         }
 
-        private static bool IsNextToWater(string[,] map, Change change)
+        private static bool IsRightOf(string[,] map, Change change, string element)
         {
-            return map[change.Location.x - 1, change.Location.y] == Water ||
-                   map[change.Location.x + 1, change.Location.y] == Water;
+            return map[change.Location.x - 1, change.Location.y] == element;
         }
 
-        private static bool IsLeftOfOpenSpace(string[,] map, Change change)
+        private static bool IsOnTopOf(string[,] map, Change change, string element)
         {
-            return map[change.Location.x + 1, change.Location.y] == OpenSpace;
-        }
-
-        private static bool IsRightOfOpenSpace(string[,] map, Change change)
-        {
-            return map[change.Location.x - 1, change.Location.y] == OpenSpace;
-        }
-
-        private static bool IsOnTopOfOpenSpace(string[,] map, Change change)
-        {
-            return map[change.Location.x, change.Location.y + 1] == OpenSpace;
-        }
-
-        private static bool IsOnTopOfSolid(string[,] map, int x, int y)
-        {
-            return map[x, y + 1] == Clay || map[x, y + 1] == Water;
+            return map[change.Location.x, change.Location.y + 1] == element;
         }
 
         private static void RegisterChange(ICollection<Change> changes, string[,] map, int newX, int newY, string newChange)
