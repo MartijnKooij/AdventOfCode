@@ -99,6 +99,11 @@ namespace part1
                             {
                                 RegisterChange(changes, map, change.Location.x, change.Location.y, Water);
                             }
+                            else if (IsNextTo(map, change, OpenSpace))
+                            {
+                                RegisterChange(changes, map, change.Location.x - 1, change.Location.y, StreamingWater);
+                                RegisterChange(changes, map, change.Location.x + 1, change.Location.y, StreamingWater);
+                            }
                             else
                             {
                                 RegisterChange(changes, map, change.Location.x, change.Location.y + 1, StreamingWater);
@@ -134,6 +139,12 @@ namespace part1
 
                 //Remove this change from the queue
                 changes.Remove(change);
+
+                if (Console.ReadKey(true).Key == ConsoleKey.Escape)
+                {
+                    Console.WriteLine("Canceling...");
+                    return false;
+                }
             }
 
             return changes.Any();
