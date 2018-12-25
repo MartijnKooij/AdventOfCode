@@ -22,7 +22,7 @@ namespace part1
 
         private static bool RunFight(int boost)
         {
-            var units = PopulateTestUnits(boost);
+            var units = PopulateUnits(boost);
             while (units.Where(u => u.Count > 0).Select(u => u.UnitType).Distinct().Count() > 1)
             {
                 //LogUnits(units);
@@ -85,11 +85,12 @@ namespace part1
             {
                 var enemies = units
                     .Where(u => u.UnitType != unit.UnitType && u.TargetedById == Guid.Empty && u.Count > 0)
-                    .OrderByDescending(u => u.CalculateDamage(unit.AttackType, unit.EffectivePower))
-                    .ThenByDescending(u => u.EffectivePower)
+                    .OrderByDescending(u => u.EffectivePower)
                     .ThenByDescending(u => u.Initiative);
 
-                var preferredEnemy = enemies.FirstOrDefault();
+                var preferredEnemy = enemies
+                    .OrderByDescending(u => u.CalculateDamage(unit.AttackType, unit.EffectivePower))
+                    .FirstOrDefault();
                 if (preferredEnemy == null)
                 {
                     continue;
