@@ -23,7 +23,7 @@ namespace part1
             //     }
             // }
 
-            var lines = File.ReadAllLines("testinput13.txt");
+            var lines = File.ReadAllLines("input.txt");
             Battle(lines);
         }
 
@@ -220,6 +220,7 @@ namespace part1
         public bool IsDead => HitPoints <= 0;
 
         private Guid id = Guid.NewGuid();
+        private int offsetOrder;
 
         public (Position position, Player player) GetNearestReachableEnemy(
             IReadOnlyList<Player> players,
@@ -297,7 +298,7 @@ namespace part1
             {
                 targetPositionedEnemies.AddRange(
                     offsets.Select(
-                            offset => enemy.CloneWithOffset(offset))
+                            offset => enemy.CloneWithOffset(offset, Array.IndexOf(offsets, offset)))
                         .Where(
                             targetEnemy => grid[targetEnemy.Position.X, targetEnemy.Position.Y] != '#'));
             }
@@ -305,7 +306,8 @@ namespace part1
             var enemies = new List<Player>();
             foreach (var enemy in targetPositionedEnemies.OrderBy(x => weakestFirst ? x.HitPoints : 0)
                 .ThenBy(x => x.Position.Y)
-                .ThenBy(x => x.Position.X))
+                .ThenBy(x => x.Position.X)
+                .ThenBy(x => x.offsetOrder))
             {
                 if (enemies.All(x => x.id != enemy.id))
                 {
@@ -316,14 +318,15 @@ namespace part1
             return enemies;
         }
 
-        private Player CloneWithOffset(Offset offset)
+        private Player CloneWithOffset(Offset offset, int offsetIndex)
         {
             var targetEnemy = new Player
             {
                 id = id,
                 HitPoints = HitPoints,
                 Type = Type,
-                Position = new Position(Position.X + offset.X, Position.Y + offset.Y)
+                Position = new Position(Position.X + offset.X, Position.Y + offset.Y),
+                offsetOrder = offsetIndex
             };
 
             return targetEnemy;
