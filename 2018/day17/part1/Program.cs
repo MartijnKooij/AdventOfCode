@@ -73,7 +73,7 @@ namespace part1
             maxX = allXValues.Max();
 
             map[500, 1] = StreamingWater;
-            var changes = new List<Change>
+            var changes = new SortedSet<Change>(new OrderedChangeComparer())
             {
                 new Change(StreamingWater, (500, 1))
             };
@@ -86,11 +86,17 @@ namespace part1
             LogMap(map, allXValues, allYValues);
         }
 
-        private static bool ProcessChanges(List<Change> changes, string[,] map)
+        private static bool ProcessChanges(SortedSet<Change> changes, string[,] map)
         {
-            for (var changeIndex = changes.Count - 1; changeIndex >= 0; changeIndex--)
+            while (changes.Count > 0)
             {
-                var change = changes[changeIndex];
+                var change = changes.First();
+                changes.Remove(change);
+
+                if (change.Location == (529, 133))
+                {
+                    change.Location = change.Location;
+                }
                 switch (change.Value)
                 {
                     case StreamingWater:
@@ -99,12 +105,8 @@ namespace part1
                             {
                                 RegisterChange(changes, map, change.Location.x, change.Location.y, Water);
                             }
-                            else if (IsNextTo(map, change, OpenSpace))
-                            {
-                                RegisterChange(changes, map, change.Location.x - 1, change.Location.y, StreamingWater);
-                                RegisterChange(changes, map, change.Location.x + 1, change.Location.y, StreamingWater);
-                            }
-                            else
+
+                            if (IsOnTopOf(map, change, OpenSpace))
                             {
                                 RegisterChange(changes, map, change.Location.x, change.Location.y + 1, StreamingWater);
                             }
@@ -113,6 +115,11 @@ namespace part1
                         }
                     case Water:
                         {
+                            if (IsOnTopOf(map, change, OpenSpace))
+                            {
+                                RegisterChange(changes, map, change.Location.x, change.Location.y, StreamingWater);
+                            }
+
                             if (IsOnTopOf(map, change, Clay) || IsOnTopOf(map, change, Water))
                             {
                                 if (IsRightOf(map, change, OpenSpace))
@@ -123,42 +130,93 @@ namespace part1
                                 {
                                     RegisterChange(changes, map, change.Location.x + 1, change.Location.y, Water);
                                 }
-                                if (IsNextTo(map, change, Clay) && IsBelow(map, change, StreamingWater))
-                                {
-                                    RegisterChange(changes, map, change.Location.x, change.Location.y - 1, Water);
-                                }
                             }
-                            else if (IsOnTopOf(map, change, OpenSpace))
+
+                            if (IsBelow(map, change, StreamingWater) && IsBoxed(change, map))
                             {
-                                RegisterChange(changes, map, change.Location.x, change.Location.y, StreamingWater);
+                                RegisterChange(changes, map, change.Location.x, change.Location.y - 1, Water, 1);
+                            }
+
+                            if (IsBelow(map, change, StreamingWater) && IsOnTopOf(map, change, Clay))
+                            {
+                                RegisterChange(changes, map, change.Location.x, change.Location.y - 1, Water, 1);
+                            }
+
+                            if (IsRightOf(map, change, StreamingWater))
+                            {
+                                RegisterChange(changes, map, change.Location.x - 1, change.Location.y, Water);
+                            }
+                            if (IsLeftOf(map, change, StreamingWater))
+                            {
+                                RegisterChange(changes, map, change.Location.x + 1, change.Location.y, Water);
                             }
 
                             break;
                         }
                 }
 
-                //Remove this change from the queue
-                changes.Remove(change);
-
-                if (Console.ReadKey(true).Key == ConsoleKey.Escape)
+                if (!changes.Any())
                 {
-                    Console.WriteLine("Canceling...");
-                    return false;
+                    Console.WriteLine($"Last change was: {change}");
+                }
+
+                if (Console.KeyAvailable)
+                {
+                    if (Console.ReadKey(true).Key == ConsoleKey.Escape)
+                    {
+                        Console.WriteLine("Canceling...");
+                        return false;
+                    }
                 }
             }
 
             return changes.Any();
         }
 
+        private static bool IsBoxed(Change change, string[,] map)
+        {
+            var leftX = change.Location.x;
+            var rightX = change.Location.x;
+            var foundLeftBox = false;
+            var foundRightBox = false;
+            while (true)
+            {
+                if (!foundLeftBox) leftX--;
+                if (!foundRightBox) rightX++;
+
+                if (!IsInBounds(leftX, change.Location.y) || !IsInBounds(rightX, change.Location.y))
+                {
+                    return false;
+                }
+
+                if (IsOnTopOf(map, new Change("", (leftX, change.Location.y)), OpenSpace))
+                {
+                    return false;
+                }
+                if (IsOnTopOf(map, new Change("", (rightX, change.Location.y)), OpenSpace))
+                {
+                    return false;
+                }
+
+                if (map[leftX, change.Location.y] == Clay)
+                {
+                    foundLeftBox = true;
+                }
+                if (map[rightX, change.Location.y] == Clay)
+                {
+                    foundRightBox = true;
+                }
+
+                if (foundLeftBox && foundRightBox)
+                {
+                    return true;
+                }
+            }
+        }
+
         private static bool IsBelow(string[,] map, Change change, string element)
         {
             return map[change.Location.x, change.Location.y - 1] == element;
-        }
-
-        private static bool HasElementOnBothSides(string[,] map, Change change, string element)
-        {
-            return map[change.Location.x - 1, change.Location.y] == element &&
-                   map[change.Location.x + 1, change.Location.y] == element;
         }
 
         private static bool IsNextTo(string[,] map, Change change, string element)
@@ -182,19 +240,19 @@ namespace part1
             return map[change.Location.x, change.Location.y + 1] == element;
         }
 
-        private static void RegisterChange(ICollection<Change> changes, string[,] map, int newX, int newY, string newChange)
+        private static void RegisterChange(SortedSet<Change> changes, string[,] map, int newX, int newY, string newChange, int order = 0)
         {
-            if (!CheckBounds(newX, newY))
+            if (!IsInBounds(newX, newY))
             {
                 return;
             }
 
             map[newX, newY] = newChange;
 
-            changes.Add(new Change(newChange, (newX, newY)));
+            changes.Add(new Change(newChange, (newX, newY), order));
         }
 
-        private static bool CheckBounds(int newX, int newY)
+        private static bool IsInBounds(int newX, int newY)
         {
             return newX >= minX && newY >= minY && newX <= maxX && newY <= maxY;
         }
@@ -209,7 +267,8 @@ namespace part1
                 for (var y = 0; y < allYValues.Max() + 1; y++)
                 {
                     var line = new StringBuilder();
-                    for (var x = allXValues.Min() - 1; x < allXValues.Max() + 1; x++)
+                    //for (var x = allXValues.Min() - 1; x < allXValues.Max() + 1; x++)
+                    for (var x = 0; x < allXValues.Max() + 1; x++)
                     {
                         line.Append(map[x, y]);
                     }
@@ -239,15 +298,50 @@ namespace part1
         }
     }
 
+    public class OrderedChangeComparer : IComparer<Change>
+    {
+        public int Compare(Change x, Change y)
+        {
+            if (x == null || y == null)
+                return 0;
+
+            if (x.Order == y.Order)
+                return x.Location == y.Location ? 0 : -1;
+
+            if (x.Order < y.Order)
+                return -1;
+
+            if (x.Order > y.Order)
+                return 1;
+
+
+            return 0;
+        }
+    }
+
     public class Change
     {
         public Change(string value, (int x, int y) location)
         {
             Value = value;
             Location = location;
+            Order = 0;
+        }
+
+        public Change(string value, (int x, int y) location, int order)
+        {
+            Value = value;
+            Location = location;
+            Order = order;
         }
 
         public string Value { get; set; }
         public (int x, int y) Location { get; set; }
+        public int Order { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Value} at ({Location.x},{Location.y})";
+        }
     }
 }
