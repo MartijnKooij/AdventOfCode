@@ -23,7 +23,24 @@ namespace part2
 
             TraverseNodes(input, parentNode);
 
-            Console.WriteLine(parentNode.Sum(0));
+            var sourceNode = root.GetChild(source);
+            var targetNode = root.GetChild(target);
+
+            var orbits = 0;
+            var searchNode = sourceNode.Parent;
+            while (true)
+            {
+                orbits += 1;
+                if (searchNode.HasChild(target))
+                {
+                    orbits += targetNode.StepsToParentNode(searchNode.Id, 0);
+                    break;
+                }
+
+                searchNode = searchNode.Parent;
+            }
+
+            Console.WriteLine(orbits);
         }
 
         private static void TraverseNodes(string[] input, Node parentNode)
@@ -46,10 +63,9 @@ namespace part2
             }
         }
 
-        private class Node : IEnumerable<Node>
+        private class Node
         {
-            private readonly Dictionary<string, Node> children =
-                                                new Dictionary<string, Node>();
+            private readonly Hashtable children = new Hashtable();
 
             public readonly string Id;
             public Node Parent { get; private set; }
@@ -61,16 +77,64 @@ namespace part2
 
             public Node GetChild(string id)
             {
-                return children[id];
+                if (children[id] != null)
+                {
+                    return children[id] as Node;
+                }
+
+                foreach (DictionaryEntry child in children)
+                {
+                    var childNode = child.Value as Node;
+                    var node = childNode.GetChild(id);
+
+                    if (node != null)
+                    {
+                        return node;
+                    }
+                }
+
+                return null;
+            }
+
+            public bool HasChild(string id)
+            {
+                if (children[id] != null)
+                {
+                    return true;
+                }
+
+                foreach (DictionaryEntry child in children)
+                {
+                    var childNode = child.Value as Node;
+                    var hasChild = childNode.HasChild(id);
+
+                    if (hasChild)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            public int StepsToParentNode(string parentId, int stepsToHere)
+            {
+                if (Parent == null)
+                {
+                    throw new KeyNotFoundException($"No parent found with ID {parentId}");
+                }
+
+                stepsToHere += 1;
+                if (Parent.Id == parentId)
+                {
+                    return stepsToHere;
+                }
+
+                return Parent.StepsToParentNode(parentId, stepsToHere);
             }
 
             public void Add(Node item)
             {
-                if (item.Parent != null)
-                {
-                    item.Parent.children.Remove(item.Id);
-                }
-
                 item.Parent = this;
                 children.Add(item.Id, item);
             }
@@ -80,22 +144,13 @@ namespace part2
                 var stepsToHere = stepsToRoot + 1;
                 var childSteps = 0;
 
-                foreach (var child in children)
+                foreach (DictionaryEntry child in children)
                 {
-                    childSteps += child.Value.Sum(stepsToHere);
+                    var childNode = child.Value as Node;
+                    childSteps += childNode.Sum(stepsToHere);
                 }
 
                 return stepsToHere + childSteps;
-            }
-
-            public IEnumerator<Node> GetEnumerator()
-            {
-                return children.Values.GetEnumerator();
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return this.GetEnumerator();
             }
 
             public int Count
