@@ -4,6 +4,8 @@ namespace Days.Base
 {
 	public abstract class BaseDay
 	{
+		protected const string InputsPath = "../Inputs/";
+
 		public void Prepare()
 		{
 			Log("Prepare Start...");

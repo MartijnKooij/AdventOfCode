@@ -5,7 +5,7 @@ using Days.Base;
 
 namespace Days
 {
-	public class Day01Part1: BaseDay
+	public class Day01Part2 : BaseDay
 	{
 		protected override void PrepareImpl()
 		{
@@ -18,11 +18,14 @@ namespace Days
 			{
 				for (var j = 0; j < _input.Length; j++)
 				{
-					if (i == j) continue;
-					if (_input[i] + _input[j] != 2020) continue;
+					for (var k = 0; k < _input.Length; k++)
+					{
+						if (i == j || i == k || j == k) continue;
+						if (_input[i] + _input[j] + _input[k] != 2020) continue;
 
-					_answer = _input[i] * _input[j];
-					return;
+						_answer = _input[i] * _input[j] * _input[k];
+						return;
+					}
 				}
 			}
 		}
