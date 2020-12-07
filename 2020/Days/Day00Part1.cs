@@ -15,6 +15,7 @@ namespace Days
 
 		protected override void SolveImpl()
 		{
+			answer = 0;
 		}
 
 		protected override void RenderImpl()
