@@ -1,47 +1,66 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Days.Base
 {
-	public abstract class BaseDay
-	{
-		protected const string InputsPath = "../Inputs/";
+    public abstract class BaseDay
+    {
+        protected const string InputsPath = "../Inputs/";
 
-		public void Prepare()
-		{
-			Log("Prepare Start...");
+        public void Prepare()
+        {
+            Log("Prepare Start...");
 
-			PrepareImpl();
+            PrepareImpl();
 
-			Log("Prepare End...");
-		}
+            Log("Prepare End...");
+        }
 
-		public void Solve()
-		{
-			Log("Solve Start...");
+        public void Solve()
+        {
+            Log("Solve Start...");
 
-			SolveImpl();
+            SolveImpl();
 
-			Log("Solve End...");
-		}
+            Log("Solve End...");
+        }
 
-		public void Render()
-		{
-			Log("Render Start...");
+        public void Render()
+        {
+            Log("Render Start...");
 
-			RenderImpl();
+            RenderImpl();
 
-			Log("Render End...");
-		}
+            Log("Render End...");
+        }
 
-		protected abstract void PrepareImpl();
-		protected abstract void SolveImpl();
-		protected abstract void RenderImpl();
+        protected abstract void PrepareImpl();
+        protected abstract void SolveImpl();
+        protected abstract void RenderImpl();
 
-		protected static void Log(string message)
-		{
-			var milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+        protected static void Log(string message)
+        {
+            var milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
-			Console.WriteLine(milliseconds + ": " + message);
-		}
-	}
+            Console.WriteLine(milliseconds + ": " + message);
+        }
+
+        protected static void Log(List<List<char>> map)
+        {
+            var maxX = map.Count;
+            var maxY = map[0].Count;
+
+            for (int y = 0; y < maxY; y++)
+            {
+                var log = new StringBuilder();
+                for (int x = 0; x < maxX; x++)
+                {
+                    log.Append(map[x][y]);
+                }
+                Console.WriteLine(log.ToString());
+            }
+        }
+
+    }
 }
