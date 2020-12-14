@@ -6,7 +6,7 @@ namespace Runner
 	{
 		private static void Main()
 		{
-			var day = new Day12Part2();
+			var day = new Day13Part2();
 			day.Prepare();
 			day.Solve();
 			day.Render();
