@@ -1,5 +1,12 @@
 import { readInput } from '../read-input';
 
 const input = readInput();
+let count = 0;
 
-console.log('Hello world!', input);
+for (let index = 1; index < input.length; index++) {
+    if (input[index - 1] < input[index]) {
+        count ++;
+    }
+}
+
+console.log('The answer is', count);
