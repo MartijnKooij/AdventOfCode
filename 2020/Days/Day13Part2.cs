@@ -3,6 +3,7 @@ using System.IO;
 using Days.Base;
 using System.Linq;
 using System;
+using System.Threading.Tasks;
 
 namespace Days
 {
@@ -29,32 +30,32 @@ namespace Days
             answer = findMinX(timestamps.ToArray(), offsets.ToArray(), timestamps.Count);
         }
 
-        private static long findMinX(int[] num, int[] rem, int k)
+        private static long findMinX(int[] values, int[] expectedRemainders, int k)
         {
-            // Initialize result 
-            long x = 1;
+            int max = values[0];
+            long x = 722385461606823;
 
-            // As per the Chinese remainder theorem, 
-            // this loop will always break. 
             while (true)
             {
-                // Check if remainder of x % num[j] is  
-                // rem[j] or not (for all j from 0 to k-1) 
-				var j = 0;
-                for (j = 0; j < k; j++)
+                if (x % 3700000000 == 0)
                 {
-                    var remj = x % num[j];
-					remj = remj == 0 ? 0 : num[j] - remj;
-                    if (remj != rem[j])
+                    Log("Still running...");
+                }
+
+				var j = 0;
+                if (x % values[j] != 0)
+                    continue;
+
+                for (j = 1; j < k; j++)
+                {
+                    if (values[j] - x % values[j] != expectedRemainders[j])
                         break;
                 }
 
-                // If all remainders matched, we found x 
                 if (j == k)
                     return x;
 
-                // Else try next numner 
-                x++;
+                x += max;
             }
         }
 

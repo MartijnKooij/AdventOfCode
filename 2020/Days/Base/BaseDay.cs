@@ -1,5 +1,8 @@
-﻿using System;
+﻿#define TRACE
+
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace Days.Base
@@ -43,7 +46,7 @@ namespace Days.Base
         {
             var milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
-            Console.WriteLine(milliseconds + ": " + message);
+            Trace.WriteLine(milliseconds + ": " + message);
         }
 
         protected static void Log(List<List<char>> map)
@@ -58,7 +61,7 @@ namespace Days.Base
                 {
                     log.Append(map[x][y]);
                 }
-                Console.WriteLine(log.ToString());
+                Trace.WriteLine(log.ToString());
             }
         }
 
