@@ -1,0 +1,1 @@
+TS watch using `tsc -w -p .` then run using `node .\2021\day-1\part-1.js`.
