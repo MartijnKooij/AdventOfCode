@@ -1,1 +1,5 @@
-console.log('Hello world!');
+import { readInput } from '../read-input';
+
+const input = readInput();
+
+console.log('Hello world!', input);
