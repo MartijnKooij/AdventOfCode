@@ -23,12 +23,6 @@ exports.readInput = void 0;
 const fs = __importStar(require("fs"));
 function readInput() {
     const data = fs.readFileSync('./input.txt').toString();
-    return data.split('\n').map((l) => {
-        const parts = l.split(' ');
-        return {
-            operation: parts[0],
-            count: parseInt(parts[1], 10),
-        };
-    });
+    return data.split('\r\n');
 }
 exports.readInput = readInput;

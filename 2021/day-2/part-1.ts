@@ -1,4 +1,4 @@
-import { readInput } from "./read-input";
+import { readInput } from './read-input';
 
 const input = readInput();
 const location = {
@@ -8,13 +8,13 @@ const location = {
 
 input.forEach((i) => {
   switch (i.operation) {
-    case "forward":
+    case 'forward':
       location.position += i.count;
       break;
-    case "down":
+    case 'down':
       location.depth += i.count;
       break;
-    case "up":
+    case 'up':
       location.depth -= i.count;
       break;
     default:
@@ -22,4 +22,4 @@ input.forEach((i) => {
   }
 });
 
-console.log("The answer is", location.position * location.depth);
+console.log('The answer is', location.position * location.depth);

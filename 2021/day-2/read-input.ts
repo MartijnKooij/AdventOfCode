@@ -1,13 +1,13 @@
-import * as fs from "fs";
+import * as fs from 'fs';
 
 export function readInput(): {
   operation: string;
   count: number;
 }[] {
-  const data = fs.readFileSync("./input.txt").toString();
+  const data = fs.readFileSync('./input.txt').toString();
 
-  return data.split("\n").map((l) => {
-    const parts = l.split(" ");
+  return data.split('\n').map((l) => {
+    const parts = l.split(' ');
 
     return {
       operation: parts[0],
