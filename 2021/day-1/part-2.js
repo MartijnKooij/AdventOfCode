@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const read_input_1 = require("../read-input");
+const read_input_1 = require("./read-input");
 const input = (0, read_input_1.readInput)();
 let count = 0;
 for (let index = 3; index < input.length + 3; index++) {

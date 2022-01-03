@@ -1,4 +1,4 @@
-import { readInput } from '../read-input';
+import { readInput } from './read-input';
 
 const input = readInput();
 let count = 0;
