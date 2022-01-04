@@ -21,8 +21,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.readInput = void 0;
 const fs = __importStar(require("fs"));
-function readInput() {
-    const data = fs.readFileSync('./input.txt').toString();
+function readInput(fileName = './input.txt') {
+    const data = fs.readFileSync(fileName).toString();
     return data.split('\r\n');
 }
 exports.readInput = readInput;

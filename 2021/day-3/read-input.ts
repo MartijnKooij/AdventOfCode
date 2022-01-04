@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 
-export function readInput() {
-  const data = fs.readFileSync('./input.txt').toString();
+export function readInput(fileName = './input.txt') {
+  const data = fs.readFileSync(fileName).toString();
 
   return data.split('\r\n');
 }
