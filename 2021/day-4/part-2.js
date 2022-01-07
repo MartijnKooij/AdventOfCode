@@ -1,24 +1,53 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const read_input_1 = require("./read-input");
-const input = (0, read_input_1.readInput)('./input.txt');
-let inputO2 = [...input];
-let inputCO2 = [...input];
-const power = {
-    o2: [],
-    co2: []
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-for (let b = 0; b < input[0].length; b++) {
-    const o21count = inputO2.filter((i) => i[b] === '1').length;
-    const o20count = inputO2.filter((i) => i[b] === '0').length;
-    const co21count = inputCO2.filter((i) => i[b] === '1').length;
-    const co20count = inputCO2.filter((i) => i[b] === '0').length;
-    console.log('debug', co21count, co20count, inputCO2);
-    power.o2[b] = o21count >= o20count ? '1' : '0';
-    power.co2[b] = co21count < co20count ? '1' : '0';
-    inputO2 = inputO2.length > 1 ? inputO2.filter((i) => i[b] === power.o2[b]) : inputO2;
-    inputCO2 = inputCO2.length > 1 ? inputCO2.filter((i) => i[b] === power.co2[b]) : inputCO2;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Runner = void 0;
+const read_input_1 = require("./read-input");
+const lodash_1 = __importDefault(require("lodash"));
+class Runner {
+    constructor() {
+        this.game = (0, read_input_1.readInput)('./input.txt');
+    }
+    execute() {
+        for (let n = 0; n < this.game.numbers.length; n++) {
+            const number = this.game.numbers[n];
+            const foundBingo = this.checkNumberOnAllBoards(number);
+            if (this.game.boards.length === 1 && foundBingo) {
+                const sum = lodash_1.default.flattenDeep(this.game.boards[0].numbers)
+                    .filter((v, i, a) => a.indexOf(v) === i)
+                    .reduce((p, c) => p + c, 0);
+                console.log('score', sum, number, sum * number);
+                break;
+            }
+            this.game.boards = this.game.boards.filter((b) => !b.numbers.some((v) => v.length === 0));
+            console.log('losing boards left', this.game.boards.length);
+        }
+    }
+    checkNumberOnAllBoards(number) {
+        let foundBingo;
+        for (let b = 0; b < this.game.boards.length; b++) {
+            const board = this.game.boards[b];
+            if (this.checkBingo(board, number)) {
+                foundBingo = true;
+            }
+        }
+        return foundBingo;
+    }
+    checkBingo(board, number) {
+        let hasBingo = false;
+        for (let row = 0; row < board.numbers.length; row++) {
+            board.numbers[row] = board.numbers[row].filter((rowNumber) => rowNumber !== number);
+            if (board.numbers[row].length === 0) {
+                hasBingo = true;
+            }
+        }
+        if (hasBingo) {
+            console.log('winner', JSON.stringify(board));
+        }
+        return hasBingo;
+    }
 }
-console.log('debug', power.o2.join(''), power.co2.join(''));
-console.log('debug', inputO2.join(''), inputCO2.join(''));
-console.log('The answer is', parseInt(inputO2.join(''), 2) * parseInt(inputCO2.join(''), 2));
+exports.Runner = Runner;
+new Runner().execute();

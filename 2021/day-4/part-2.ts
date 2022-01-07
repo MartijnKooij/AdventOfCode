@@ -1,28 +1,67 @@
+import { Board } from './board';
 import { readInput } from './read-input';
+import _ from 'lodash';
+import { Game } from './game';
 
-const input = readInput('./input.txt');
-let inputO2 = [...input];
-let inputCO2 = [...input];
-const power = {
-  o2: [] as string[],
-  co2: [] as string[]
-};
+export class Runner {
+  private game: Game;
 
-for (let b = 0; b < input[0].length; b++) {
-  const o21count = inputO2.filter((i) => i[b] === '1').length;
-  const o20count = inputO2.filter((i) => i[b] === '0').length;
-  const co21count = inputCO2.filter((i) => i[b] === '1').length;
-  const co20count = inputCO2.filter((i) => i[b] === '0').length;
+  constructor() {
+    this.game = readInput('./input.txt');
+  }
 
-  console.log('debug', co21count, co20count, inputCO2);
+  execute() {
+    for (let n = 0; n < this.game.numbers.length; n++) {
+      const number = this.game.numbers[n];
 
-  power.o2[b] = o21count >= o20count ? '1' : '0';
-  power.co2[b] = co21count < co20count ? '1' : '0';
+      const foundBingo = this.checkNumberOnAllBoards(number);
 
-  inputO2 = inputO2.length > 1 ? inputO2.filter((i) => i[b] === power.o2[b]) : inputO2;
-  inputCO2 = inputCO2.length > 1 ? inputCO2.filter((i) => i[b] === power.co2[b]) : inputCO2;
+      if (this.game.boards.length === 1 && foundBingo) {
+        const sum = _.flattenDeep(this.game.boards[0].numbers)
+          .filter((v, i, a) => a.indexOf(v) === i)
+          .reduce((p, c) => p + c, 0);
+
+        console.log('score', sum, number, sum * number);
+
+        break;
+      }
+
+      this.game.boards = this.game.boards.filter((b) => !b.numbers.some((v) => v.length === 0));
+      console.log('losing boards left', this.game.boards.length);
+    }
+  }
+
+  private checkNumberOnAllBoards(number: number) {
+    let foundBingo;
+
+    for (let b = 0; b < this.game.boards.length; b++) {
+      const board = this.game.boards[b];
+
+      if (this.checkBingo(board, number)) {
+        foundBingo = true;
+      }
+    }
+
+    return foundBingo;
+  }
+
+  private checkBingo(board: Board, number: number): boolean {
+    let hasBingo = false;
+
+    for (let row = 0; row < board.numbers.length; row++) {
+      board.numbers[row] = board.numbers[row].filter((rowNumber) => rowNumber !== number);
+
+      if (board.numbers[row].length === 0) {
+        hasBingo = true;
+      }
+    }
+
+    if (hasBingo) {
+      console.log('winner', JSON.stringify(board));
+    }
+
+    return hasBingo;
+  }
 }
 
-console.log('debug', power.o2.join(''), power.co2.join(''));
-console.log('debug', inputO2.join(''), inputCO2.join(''));
-console.log('The answer is', parseInt(inputO2.join(''), 2) * parseInt(inputCO2.join(''), 2));
+new Runner().execute();
