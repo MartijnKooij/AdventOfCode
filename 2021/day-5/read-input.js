@@ -19,14 +19,32 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.readInput = void 0;
+exports.readInput = exports.Line = void 0;
 const fs = __importStar(require("fs"));
+class Line {
+    constructor() {
+        this.x1 = 0;
+        this.y1 = 0;
+        this.x2 = 0;
+        this.y2 = 0;
+    }
+}
+exports.Line = Line;
 function readInput(fileName = './input.txt') {
-    const data = fs.readFileSync(fileName).toString().replace(/ {2}/g, ' ');
+    const data = fs.readFileSync(fileName).toString();
     const lines = data.split('\r\n');
-    lines.forEach(line => {
-        const values = line.match(/(\d+),(\d+) -> (\d+),(\d+)$)/g);
-        console.log('input', values);
+    let points = lines.filter(l => !!l).map(line => {
+        const values = [...line.matchAll(/(\d+),(\d+) -> (\d+),(\d+)$/g)];
+        // console.log('processing', values);
+        return {
+            x1: parseInt(values[0][1], 10),
+            y1: parseInt(values[0][2], 10),
+            x2: parseInt(values[0][3], 10),
+            y2: parseInt(values[0][4], 10)
+        };
     });
+    // For part 1 only
+    points = points.filter(p => p.x1 === p.x2 || p.y1 === p.y2);
+    return points;
 }
 exports.readInput = readInput;
