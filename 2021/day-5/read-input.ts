@@ -11,7 +11,7 @@ export function readInput(fileName = './input.txt'): Line[] {
   const data = fs.readFileSync(fileName).toString();
   const lines = data.split('\r\n');
 
-  let points = lines.filter(l => !!l).map(line => {
+  const points = lines.filter(l => !!l).map(line => {
     const values = [...line.matchAll(/(\d+),(\d+) -> (\d+),(\d+)$/g)];
 
     // console.log('processing', values);
@@ -25,7 +25,7 @@ export function readInput(fileName = './input.txt'): Line[] {
   });
 
   // For part 1 only
-  points = points.filter(p => p.x1 === p.x2 || p.y1 === p.y2);
+  // points = points.filter(p => p.x1 === p.x2 || p.y1 === p.y2);
 
   return points;
 }
