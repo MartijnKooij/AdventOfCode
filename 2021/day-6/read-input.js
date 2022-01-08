@@ -19,16 +19,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.readInput = exports.Fish = void 0;
+exports.readInput = void 0;
 const fs = __importStar(require("fs"));
-class Fish {
-    constructor(timer) {
-        this.timer = timer;
-    }
-}
-exports.Fish = Fish;
 function readInput(fileName = './input.txt') {
     const data = fs.readFileSync(fileName).toString();
-    return data.split(',').filter(v => !!v).map(v => new Fish(parseInt(v, 10)));
+    return data.split(',').filter(v => !!v).map(v => parseInt(v, 10));
 }
 exports.readInput = readInput;

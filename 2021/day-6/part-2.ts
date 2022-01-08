@@ -1,44 +1,32 @@
-import { Line, readInput } from './read-input';
+import { readInput } from './read-input';
 
 export class Runner {
-  private input: Line[];
+  private fishes: number[];
 
   constructor() {
-    this.input = readInput('./input.txt');
+    this.fishes = readInput('./control.txt');
   }
 
   execute() {
-    // console.log('input', this.input, this.input.length);
+    // console.log('input', this.fishes, this.fishes.length);
 
-    const lines = new Map();
+    for (let day = 0; day < 256; day++) {
+      const length = this.fishes.length;
+      console.log('day', day, this.fishes.length);
 
-    this.input.forEach(line => {
-      if (line.x1 === line.x2) {
-        const startY = Math.min(line.y1, line.y2);
-        const lengthY = Math.max(line.y1, line.y2) + 1;
-        for (let y = startY; y < lengthY; y++) {
-          lines.set(`${line.x1},${y}`, (lines.get(`${line.x1},${y}`) ?? 0) + 1);
-        }
-      } else if (line.y1 === line.y2) {
-        const startX = Math.min(line.x1, line.x2);
-        const lengthX = Math.max(line.x1, line.x2) + 1;
-        for (let x = startX; x < lengthX; x++) {
-          lines.set(`${x},${line.y1}`, (lines.get(`${x},${line.y1}`) ?? 0) + 1);
-        }
-      } else {
-        const diffX = line.x1 < line.x2 ? 1 : -1;
-        const diffY = line.y1 < line.y2 ? 1 : -1;
-        const length = Math.abs(line.x1 - line.x2) + 1;
-
-        for (let step = 0; step < length; step++) {
-          const x = line.x1 + step * diffX;
-          const y = line.y1 + step * diffY;
-          lines.set(`${x},${y}`, (lines.get(`${x},${y}`) ?? 0) + 1);
+      for (let f = 0; f < length; f++) {
+        if (this.fishes[f] === 0) {
+          this.fishes[f] = 6;
+          this.fishes.push(8);
+        } else {
+          this.fishes[f] = this.fishes[f] - 1;
         }
       }
-    });
 
-    console.log('answer', Array.from(lines).filter((value) => value[1] >= 2).length);
+      // console.log('day', this.fishes.length, day + 1, this.fishes.map((f) => f.timer));
+    }
+
+    console.log('answer', this.fishes.length);
   }
 }
 
