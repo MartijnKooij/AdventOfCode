@@ -4,29 +4,31 @@ export class Runner {
   private fishes: number[];
 
   constructor() {
-    this.fishes = readInput('./control.txt');
+    this.fishes = readInput('./input.txt');
   }
 
   execute() {
-    // console.log('input', this.fishes, this.fishes.length);
+    const ages = [
+      this.fishes.filter(a => a === 0).length,
+      this.fishes.filter(a => a === 1).length,
+      this.fishes.filter(a => a === 2).length,
+      this.fishes.filter(a => a === 3).length,
+      this.fishes.filter(a => a === 4).length,
+      this.fishes.filter(a => a === 5).length,
+      this.fishes.filter(a => a === 6).length,
+      this.fishes.filter(a => a === 7).length,
+      this.fishes.filter(a => a === 8).length
+    ];
 
     for (let day = 0; day < 256; day++) {
-      const length = this.fishes.length;
-      console.log('day', day, this.fishes.length);
+        const reproduced = ages.shift() as number;
 
-      for (let f = 0; f < length; f++) {
-        if (this.fishes[f] === 0) {
-          this.fishes[f] = 6;
-          this.fishes.push(8);
-        } else {
-          this.fishes[f] = this.fishes[f] - 1;
-        }
-      }
+        ages[6] += reproduced;
 
-      // console.log('day', this.fishes.length, day + 1, this.fishes.map((f) => f.timer));
+        ages.push(reproduced);
     }
 
-    console.log('answer', this.fishes.length);
+    console.log('ages', ages, ages.reduce((p, c) => p + c, 0));
   }
 }
 
