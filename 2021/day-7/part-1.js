@@ -8,10 +8,10 @@ class Runner {
     }
     execute() {
         console.log('input', this.crabs, this.crabs.length);
-        const median = (arr) => {
-            const middle = Math.floor(arr.length / 2);
-            arr = [...arr].sort((a, b) => a - b);
-            return arr.length % 2 !== 0 ? arr[middle] : (arr[middle - 1] + arr[middle]) / 2;
+        const median = (numbers) => {
+            const middle = Math.floor(numbers.length / 2);
+            numbers = [...numbers].sort((a, b) => a - b);
+            return numbers.length % 2 !== 0 ? numbers[middle] : (numbers[middle - 1] + numbers[middle]) / 2;
         };
         const preferredX = median(this.crabs);
         const cost = this.crabs.reduce((p, c) => p + Math.abs(c - preferredX), 0);
