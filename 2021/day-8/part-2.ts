@@ -5,10 +5,11 @@ export class Runner {
   private displays: Display[];
 
   constructor() {
-    this.displays = readInput('./control.txt');
+    this.displays = readInput('./input.txt');
   }
 
   execute() {
+    const answers = [] as number[];
     this.displays.forEach(display => {
       const currentDisplaySegments = [
         display.segments.filter(s => s.length === defaultSegments[0].length).join(),
@@ -56,11 +57,15 @@ export class Runner {
 
       let answer = '';
       display.output.forEach(output => {
-        answer += this.linesToNumber
+        const outputSegments = wirePlacements.map(w => output.indexOf(w) >= 0 ? w : '');
+        answer += this.linesToNumber(outputSegments);
       });
 
-      console.log('debug', currentDisplaySegments, wirePlacements, this.linesToNumber(wirePlacements));
+      answers.push(parseInt(answer, 10));
+      console.log('debug', wirePlacements, answer);
     });
+
+    console.log('answer', answers.reduce((p, c) => p + c, 0));
   }
 
   linesToNumber(lines: string[]): number {
