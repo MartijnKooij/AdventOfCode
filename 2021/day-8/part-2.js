@@ -4,9 +4,10 @@ exports.Runner = void 0;
 const read_input_1 = require("./read-input");
 class Runner {
     constructor() {
-        this.displays = (0, read_input_1.readInput)('./control.txt');
+        this.displays = (0, read_input_1.readInput)('./input.txt');
     }
     execute() {
+        const answers = [];
         this.displays.forEach(display => {
             const currentDisplaySegments = [
                 display.segments.filter(s => s.length === read_input_1.defaultSegments[0].length).join(),
@@ -45,10 +46,13 @@ class Runner {
             wirePlacements[4] = currentDisplaySegments[8].replace(new RegExp(`[${wirePlacements.join()}]`, 'gm'), '').split(',').filter(s => s.length === 1).join();
             let answer = '';
             display.output.forEach(output => {
-                answer += this.linesToNumber;
+                const outputSegments = wirePlacements.map(w => output.indexOf(w) >= 0 ? w : '');
+                answer += this.linesToNumber(outputSegments);
             });
-            console.log('debug', currentDisplaySegments, wirePlacements, this.linesToNumber(wirePlacements));
+            answers.push(parseInt(answer, 10));
+            console.log('debug', wirePlacements, answer);
         });
+        console.log('answer', answers.reduce((p, c) => p + c, 0));
     }
     linesToNumber(lines) {
         if (lines[0] && lines[1] && lines[2] && lines[3] && lines[4] && lines[5] && lines[6]) {
