@@ -111,10 +111,10 @@ const leftScore = (
   trees: number[][]
 ): number => {
   let score = 0;
-  for (let x = treeX; x >= 0; x--) {
-    if (trees[treeY][x] <= tree) {
-      score++;
-      if (trees[treeY][x] === tree) break;
+  for (let x = treeX - 1; x >= 0; x--) {
+    score++;
+    if (trees[treeY][x] >= tree) {
+      break;
     }
   }
 
@@ -129,9 +129,9 @@ const rightScore = (
 ): number => {
   let score = 0;
   for (let x = treeX + 1; x < trees[treeY].length; x++) {
-    if (trees[treeY][x] <= tree) {
-      score++;
-      if (trees[treeY][x] === tree) break;
+    score++;
+    if (trees[treeY][x] >= tree) {
+      break;
     }
   }
 
@@ -145,10 +145,10 @@ const topScore = (
   trees: number[][]
 ): number => {
   let score = 0;
-  for (let y = treeY; y >= 0; y--) {
-    if (trees[y][treeX] <= tree) {
-      score++;
-      if (trees[y][treeX] === tree) break;
+  for (let y = treeY - 1; y >= 0; y--) {
+    score++;
+    if (trees[y][treeX] >= tree) {
+      break;
     }
   }
 
@@ -163,9 +163,9 @@ const bottomScore = (
 ): number => {
   let score = 0;
   for (let y = treeY + 1; y < trees.length; y++) {
-    if (trees[y][treeX] <= tree) {
-      score++;
-      if (trees[y][treeX] === tree) break;
+    score++;
+    if (trees[y][treeX] >= tree) {
+      break;
     }
   }
 
