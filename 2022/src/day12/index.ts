@@ -1,138 +1,178 @@
 import run from "aocrunner";
 
-const dijkstra = (edges: any[], source: string, target: string) => {
-  const Q = new Set(),
-    prev = {},
-    dist = {},
-    adj = {}
-
-  const vertex_with_min_dist = (Q: Set<unknown>, dist: { [x: string]: number; }) => {
-    let min_distance = Infinity,
-      u = null
-
-    for (let v of Q) {
-      if (dist[v] < min_distance) {
-        min_distance = dist[v]
-        u = v
-      }
-    }
-    return u
-  }
-
-  for (const element of edges) {
-    let v1 = element[0],
-      v2 = element[1],
-      len = element[2]
-
-    Q.add(v1)
-    Q.add(v2)
-
-    dist[v1] = Infinity
-    dist[v2] = Infinity
-
-    if (adj[v1] === undefined) adj[v1] = {}
-    if (adj[v2] === undefined) adj[v2] = {}
-
-    adj[v1][v2] = len
-    adj[v2][v1] = len
-  }
-
-  dist[source] = 0
-
-  while (Q.size) {
-    let u = vertex_with_min_dist(Q, dist),
-      neighbors = Object.keys(adj[u]).filter(v => Q.has(v)) //Neighbor still in Q 
-
-    Q.delete(u)
-
-    if (u === target) break //Break when the target has been found
-
-    for (let v of neighbors) {
-      let alt = dist[u] + adj[u][v]
-      if (alt < dist[v]) {
-        dist[v] = alt
-        prev[v] = u
-      }
-    }
-  }
-
-  {
-    let u = target,
-      S = [u],
-      len = 0
-
-    while (prev[u] !== undefined) {
-      S.unshift(prev[u])
-      len += adj[u][prev[u]]
-      u = prev[u]
-    }
-    return [S, len]
-  }
-}
-
 const parseInput = (rawInput: string) =>
-  rawInput.split("\n").map((l) =>
-    l.split("").map((c) => c.charCodeAt(0) - 97)
-  );
+  rawInput.split("\n").map((l) => l.split("").map((c) => {
+    if (c === 'S') return 0;
+    if (c === 'E') return 27;
+    return c.charCodeAt(0) - 96;
+  }));
+
+class node {
+  x: number = 0;
+  y: number = 0;
+  level: number = 0;
+}
 
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
-  input[0][0] = "a".charCodeAt(0) - 97;
-  const startPos = { x: 0, y: 0 };
-  let goalPos = { x: 0, y: 0 };
+  let start = { x: 0, y: 0 };
+  let end = { x: 0, y: 0 };
   for (let y = 0; y < input.length; y++) {
     for (let x = 0; x < input[y].length; x++) {
-      if (input[y][x] === "E".charCodeAt(0) - 97) {
-        input[y][x] = "z".charCodeAt(0) - 97;
-        goalPos = { x, y };
-      }
+      if (input[y][x] === 0) start = { x, y };
+      if (input[y][x] === 27) end = { x, y };
     }
   }
 
-  const graph = [];
-  for (let y = 0; y < input.length; y++) {
-    for (let x = 0; x < input[y].length; x++) {
-      if (y > 0) {
-        const diff = input[y - 1][x] - input[y][x];
-        const dist = diff > 1 ? 9999999 : 1;
-        graph.push([`${x}_${y}`, `${x}_${y - 1}`, dist]);
-      }
-      if (y < input.length - 1) {
-        const diff = input[y + 1][x] - input[y][x];
-        const dist = diff > 1 ? 9999999 : 1;
-        graph.push([`${x}_${y}`, `${x}_${y + 1}`, dist]);
-      }
-      if (x > 0) {
-        const diff = input[y][x - 1] - input[y][x];
-        const dist = diff > 1 ? 9999999 : 1;
-        graph.push([`${x}_${y}`, `${x - 1}_${y}`, dist]);
-      }
-      if (x < input.length - 1) {
-        const diff = input[y][x + 1] - input[y][x];
-        const dist = diff > 1 ? 9999999 : 1;
-        graph.push([`${x}_${y}`, `${x + 1}_${y}`, dist]);
-      }
+  const queue: node[] = [
+    {
+      x: start.x,
+      y: start.y,
+      level: 0,
+    },
+  ];
+
+  let final: undefined | node = undefined;
+  const visited: Set<string> = new Set();
+
+  while (queue.length > 0) {
+    const position = queue.shift()!;
+    const key = `${position.x}_${position.y}`;
+
+    if (visited.has(key)) {
+      continue;
+    }
+
+    visited.add(key);
+
+    if (position.x === end.x && position.y === end.y) {
+      final = position;
+      break;
+    }
+
+    const currentHeight = input[position.y][position.x];
+
+    if (position.y > 0 && input[position.y - 1][position.x] - currentHeight <= 1) {
+      queue.push({
+        x: position.x,
+        y: position.y - 1,
+        level: position.level + 1,
+      });
+    }
+
+    if (position.y < input.length - 1 && input[position.y + 1][position.x] - currentHeight <= 1) {
+      queue.push({
+        x: position.x,
+        y: position.y + 1,
+        level: position.level + 1,
+      });
+    }
+
+    if (position.x > 0 && input[position.y][position.x - 1] - currentHeight <= 1) {
+      queue.push({
+        x: position.x - 1,
+        y: position.y,
+        level: position.level + 1,
+      });
+    }
+
+    if (position.x < input[0].length - 1 && input[position.y][position.x + 1] - currentHeight <= 1) {
+      queue.push({
+        x: position.x + 1,
+        y: position.y,
+        level: position.level + 1,
+      });
     }
   }
 
-  console.log('input', input, graph, `${startPos.x}_${startPos.y}`, `${goalPos.x}_${goalPos.y}`);
-
-  let [path, length] = dijkstra(graph, `${startPos.x}_${startPos.y}`, `${goalPos.x}_${goalPos.y}`);
-  console.log('output', path, length);
-
-  return length;
+  return final?.level;
 };
 
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
+  let end = { x: 0, y: 0 };
+  for (let y = 0; y < input.length; y++) {
+    for (let x = 0; x < input[y].length; x++) {
+      if (input[y][x] === 0) {
+        input[y][x] = 1;
+      };
+      if (input[y][x] === 27) end = { x, y };
+    }
+  }
 
-  return;
-};
+  const queue: node[] = [
+    {
+      x: end.x,
+      y: end.y,
+      level: 0,
+    },
+  ];
+
+  let final: undefined | node = undefined;
+  const visited: Set<string> = new Set();
+
+  while (queue.length > 0) {
+    const position = queue.shift()!;
+    const key = `${position.x},${position.y}`;
+  
+    if (visited.has(key)) {
+      continue;
+    }
+  
+    visited.add(key);
+  
+    if (input[position.y][position.x] === 1) {
+      final = position;
+      break;
+    }
+  
+    const currentHeight = input[position.y][position.x];
+  
+    if (position.y > 0 && currentHeight - input[position.y - 1][position.x] <= 1) {
+      queue.push({
+        x: position.x,
+        y: position.y - 1,
+        level: position.level + 1,
+      });
+    }
+  
+    if (position.y < input.length - 1 && currentHeight - input[position.y + 1][position.x] <= 1) {
+      queue.push({
+        x: position.x,
+        y: position.y + 1,
+        level: position.level + 1,
+      });
+    }
+  
+    if (position.x > 0 && currentHeight - input[position.y][position.x - 1] <= 1) {
+      queue.push({
+        x: position.x - 1,
+        y: position.y,
+        level: position.level + 1,
+      });
+    }
+  
+    if (position.x < input[0].length - 1 && currentHeight - input[position.y][position.x + 1] <= 1) {
+      queue.push({
+        x: position.x + 1,
+        y: position.y,
+        level: position.level + 1,
+      });
+    }
+  }
+  
+  return final?.level;
+  };
 
 run({
   part1: {
     tests: [
       {
+        // v..v<<<<
+        // >v.vv<<^
+        // .>vv>E^^
+        // ..v>>>^^
+        // ..>>>>>^
         input: `
         Sabqponm
         abcryxxl
@@ -146,13 +186,18 @@ run({
   },
   part2: {
     tests: [
-      // {
-      //   input: ``,
-      //   expected: '',
-      // },
+      {
+        input: `
+        Sabqponm
+        abcryxxl
+        accszExk
+        acctuvwj
+        abdefghi`,
+        expected: 29,
+      },
     ],
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  onlyTests: false,
 });
