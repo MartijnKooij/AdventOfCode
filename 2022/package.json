@@ -17,7 +17,9 @@
     "@types/node": "^16.11.6",
     "aocrunner": "^1.6.1"
   },
-  "dependencies": {},
+  "dependencies": {
+    "pathfinding-algorithms": "^1.0.11"
+  },
   "engines": {
     "node": ">=16.13.0"
   }
