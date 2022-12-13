@@ -199,16 +199,16 @@
           "4977",
           "4799"
         ],
-        "time": 1.5042
+        "time": 2.3142
       },
       "part2": {
-        "solved": false,
-        "result": "18676",
+        "solved": true,
+        "result": "21836",
         "attempts": [
           "18473",
           "18676"
         ],
-        "time": 84.1605
+        "time": 99.7302
       }
     },
     {

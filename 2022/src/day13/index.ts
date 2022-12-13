@@ -23,16 +23,11 @@ const part1 = (rawInput: string) => {
 
 const part2 = (rawInput: string) => {
   const input = rawInput.replace(/^(?=\n)$|^\s*|\s*$|\n\n+/gm, '') + '\n[[2]]\n[[6]]';
-  const packages = input.split('\n').filter(l => l).map((l) => {
-    return {
-      sort: JSON.parse(l).flat(),
-      data: l
-    };
-  }).sort((a, b) => a.sort < b.sort ? -1 : a.sort > b.sort ? 1 : 0);
-
+  const packages = input.split('\n').map(l => JSON.parse(l));
+  packages.sort((a, b) => isCorrectOrder(b, a));
   console.log(packages);
 
-  return (packages.findIndex(p => p.data === '[[2]]') + 1) * (packages.findIndex(p => p.data === '[[6]]') + 1);
+  return (packages.findIndex(p => JSON.stringify(p) === JSON.stringify([[2]])) + 1) * (packages.findIndex(p => JSON.stringify(p) === JSON.stringify([[6]])) + 1);
 };
 
 const isCorrectOrder = (left: any, right: any, depth = 0): -1 | 0 | 1 => {
