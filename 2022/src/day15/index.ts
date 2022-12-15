@@ -1,8 +1,9 @@
 import run from 'aocrunner';
+import * as fs from 'fs';
 
 type point = { x: number, y: number };
 
-const offset = 1500000;
+let offset = 0;
 
 const dist = (start: point, end: point): number => Math.abs(end.x - start.x) + Math.abs(end.y - start.y);
 const parseInput = (rawInput: string): point[][] => rawInput.split('\n').map((l) => {
@@ -14,6 +15,7 @@ const parseInput = (rawInput: string): point[][] => rawInput.split('\n').map((l)
 });
 
 const part1 = (rawInput: string) => {
+  offset = 1500000;
   const mapY = 2000000 + offset;
 
   const drawRange = (map: string[], center: point, distance: number): string[] => {
@@ -23,7 +25,7 @@ const part1 = (rawInput: string) => {
           map[x] = '#';
         }
       }
-  
+
     }
     return map;
   }
@@ -50,9 +52,57 @@ const part1 = (rawInput: string) => {
 };
 
 const part2 = (rawInput: string) => {
-  const input = parseInput(rawInput);
+  // --max_old_space_size=12288
+  offset = 0;
 
-  return;
+  const input = parseInput(rawInput);
+  const drawMap = (): string[][] => {
+    const map: string[][] = [];
+    for (let y = 0; y < 4000000; y++) {
+      map.push(''.padEnd(4000000, '.').split(''));
+    }
+
+    return map;
+  }
+
+  const drawRange = (map: string[][], center: point, distance: number): string[][] => {
+    for (let y = center.y - distance; y <= center.y + distance; y++) {
+      for (let x = center.x - distance; x <= center.x + distance; x++) {
+        if (y < 0 || y >= map.length || x < 0 || x >= map[0].length) {
+          continue;
+        }
+        if (dist(center, { x, y }) <= distance && map[y][x] === '.') {
+          map[y][x] = '#';
+        }
+      }
+    }
+    return map;
+  }
+
+  let map = drawMap();
+  console.log(map.length);
+
+  for (const points of input) {
+    if (points[0].y >= 0 && points[0].y < map.length && points[0].x >= 0 && points[0].x < map[0].length &&
+      points[1].y >= 0 && points[1].y < map.length && points[1].x >= 0 && points[1].x < map[1].length) {
+      map[points[0].y][points[0].x] = 'S';
+      map[points[1].y][points[1].x] = 'B';
+    }
+
+    const distance = dist(points[0], points[1]);
+    map = drawRange(map, points[0], distance);
+  }
+
+  fs.writeFileSync('./src/day15/map.txt', map.map(row => row.join('')).join('\n'));
+
+  for (let y = 0; y < map.length; y++) {
+    const x = map[y].findIndex(p => p === '.');
+    if (x >= 0) {
+      return x * 4000000 + y;
+    }
+  }
+
+  return 0;
 };
 
 run({
@@ -82,8 +132,22 @@ run({
   part2: {
     tests: [
       // {
-      //   input: ``,
-      //   expected: '',
+      //   input: `
+      //   Sensor at x=2, y=18: closest beacon is at x=-2, y=15
+      //   Sensor at x=9, y=16: closest beacon is at x=10, y=16
+      //   Sensor at x=13, y=2: closest beacon is at x=15, y=3
+      //   Sensor at x=12, y=14: closest beacon is at x=10, y=16
+      //   Sensor at x=10, y=20: closest beacon is at x=10, y=16
+      //   Sensor at x=14, y=17: closest beacon is at x=10, y=16
+      //   Sensor at x=8, y=7: closest beacon is at x=2, y=10
+      //   Sensor at x=2, y=0: closest beacon is at x=2, y=10
+      //   Sensor at x=0, y=11: closest beacon is at x=2, y=10
+      //   Sensor at x=20, y=14: closest beacon is at x=25, y=17
+      //   Sensor at x=17, y=20: closest beacon is at x=21, y=22
+      //   Sensor at x=16, y=7: closest beacon is at x=15, y=3
+      //   Sensor at x=14, y=3: closest beacon is at x=15, y=3
+      //   Sensor at x=20, y=1: closest beacon is at x=15, y=3`,
+      //   expected: 56000011,
       // },
     ],
     solution: part2,
