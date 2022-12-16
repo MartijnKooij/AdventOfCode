@@ -1,14 +1,17 @@
 import run from 'aocrunner';
+import * as fs from 'fs';
+import { join } from 'path';
 
 type distanceMap = { [x: string]: number };
 type room = { id: string, flowRate: number, tunnels: string[], distanceMap: undefined | distanceMap };
 type path = {
-  currentRoom: string,
-  active: string[],
+  currentRoomId: string,
+  activeRoomIds: string[],
   timeLeft: number,
   finished: boolean,
   steps: string[],
-  releasedPressure: number
+  releasedPressure: number,
+  key?: string
 };
 
 const parseInput = (rawInput: string): room[] => rawInput.split('\n').map((l) => {
@@ -49,8 +52,8 @@ const part1 = (rawInput: string) => {
 
   const computePaths = (timeLeft: number) => {
     let paths: path[] = [{
-      currentRoom: 'AA',
-      active: activeRooms().map((n) => n.id),
+      currentRoomId: 'AA',
+      activeRoomIds: activeRooms().map((n) => n.id),
       timeLeft: timeLeft,
       finished: false,
       steps: [],
@@ -63,17 +66,17 @@ const part1 = (rawInput: string) => {
       if (path.timeLeft <= 0) path.finished = true;
       if (path.finished) continue;
 
-      let distances = distanceMap(path.currentRoom);
+      let distances = distanceMap(path.currentRoomId);
       let moved = false;
 
-      path.active.forEach((activeRoom: string) => {
-        if (activeRoom === path.currentRoom) return true;
+      path.activeRoomIds.forEach((activeRoom: string) => {
+        if (activeRoom === path.currentRoomId) return true;
         if (path.timeLeft - distances[activeRoom] <= 1) return true;
 
         moved = true;
         paths.push({
-          currentRoom: activeRoom,
-          active: path.active.filter((v: any) => v != activeRoom),
+          currentRoomId: activeRoom,
+          activeRoomIds: path.activeRoomIds.filter((v: any) => v != activeRoom),
           timeLeft: path.timeLeft - distances[activeRoom] - 1,
           finished: false,
           steps: [...path.steps, activeRoom],
@@ -106,7 +109,7 @@ const part2 = (rawInput: string) => {
     const walk = (name: string, steps: number) => {
       if (distances[name] != undefined && distances[name] <= steps) return;
       distances[name] = steps;
-      roomById[name].tunnels.forEach((n: any) => walk(n, steps + 1));
+      roomById[name].tunnels.forEach(n => walk(n, steps + 1));
     }
     walk(startId, 0);
     roomById[startId].distanceMap = distances;
@@ -115,8 +118,8 @@ const part2 = (rawInput: string) => {
 
   const computePaths = (timeLeft: number) => {
     let paths: path[] = [{
-      currentRoom: 'AA',
-      active: activeRooms().map((n) => n.id),
+      currentRoomId: 'AA',
+      activeRoomIds: activeRooms().map((n) => n.id),
       timeLeft: timeLeft,
       finished: false,
       steps: [],
@@ -129,86 +132,89 @@ const part2 = (rawInput: string) => {
       if (path.timeLeft <= 0) path.finished = true;
       if (path.finished) continue;
 
-      let distances = distanceMap(path.currentRoom);
+      let distances = distanceMap(path.currentRoomId);
       let moved = false;
 
-      path.active.forEach((activeRoom: string) => {
-        if (activeRoom === path.currentRoom) return true;
-        if (path.timeLeft - distances[activeRoom] <= 1) return true;
+      path.activeRoomIds.forEach((activeRoomId: string) => {
+        if (activeRoomId === path.currentRoomId) return true;
+        if (path.timeLeft - distances[activeRoomId] <= 1) return true;
 
         moved = true;
         paths.push({
-          currentRoom: activeRoom,
-          active: path.active.filter((v: any) => v != activeRoom),
-          timeLeft: path.timeLeft - distances[activeRoom] - 1,
+          currentRoomId: activeRoomId,
+          activeRoomIds: path.activeRoomIds.filter((v: any) => v != activeRoomId),
+          timeLeft: path.timeLeft - distances[activeRoomId] - 1,
           finished: false,
-          steps: [...path.steps, activeRoom],
-          releasedPressure: path.releasedPressure + (path.timeLeft - distances[activeRoom] - 1) * roomById[activeRoom].flowRate
-        })
+          steps: [...path.steps, activeRoomId],
+          releasedPressure: path.releasedPressure + (path.timeLeft - distances[activeRoomId] - 1) * roomById[activeRoomId].flowRate
+        });
       });
 
       if (!moved) path.finished = true;
       if (path.finished && path.releasedPressure > max) max = path.releasedPressure;
     }
 
-    return paths.filter(p => p.finished).sort((a, b) => b.releasedPressure - a.releasedPressure);
+    return paths.sort((a, b) => b.releasedPressure - a.releasedPressure);
   }
 
   const paths = computePaths(26);
-  for (let p = 0; p < paths.length; p++) {
-    paths[p].steps.sort();
-  }
+  const active = activeRooms().map(r => r.id);
+  let maxPressure = 0;
 
-  const uniquePaths: path[] = [];
-  for (const path of paths) {
-    if (!uniquePaths.find((p => p.steps.join('') === path.steps.join('')))) {
-      uniquePaths.push(path);
+  for (let me = 0; me < paths.length; me++) {
+    for (let elephant = me + 1; elephant < paths.length; elephant++) {
+      const myPath = paths[me];
+      const elephantPath = paths[elephant];
+      const uniqueSets = myPath.steps.filter(r => active.includes(r)).every(r => !elephantPath.steps.filter(r => active.includes(r)).includes(r));
+      const pressure = myPath.releasedPressure + elephantPath.releasedPressure;
+      if (uniqueSets && pressure > maxPressure) {
+        maxPressure = pressure;
+      }
     }
   }
-  console.table(uniquePaths);
 
-  return { p: paths.length, u: uniquePaths.length };
+  return maxPressure;
 };
 
 run({
   part1: {
     tests: [
-      {
-        input: `
-        Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
-        Valve BB has flow rate=13; tunnels lead to valves CC, AA
-        Valve CC has flow rate=2; tunnels lead to valves DD, BB
-        Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE
-        Valve EE has flow rate=3; tunnels lead to valves FF, DD
-        Valve FF has flow rate=0; tunnels lead to valves EE, GG
-        Valve GG has flow rate=0; tunnels lead to valves FF, HH
-        Valve HH has flow rate=22; tunnel leads to valve GG
-        Valve II has flow rate=0; tunnels lead to valves AA, JJ
-        Valve JJ has flow rate=21; tunnel leads to valve II`,
-        expected: 1651,
-      },
+      // {
+      //   input: `
+      //   Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
+      //   Valve BB has flow rate=13; tunnels lead to valves CC, AA
+      //   Valve CC has flow rate=2; tunnels lead to valves DD, BB
+      //   Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE
+      //   Valve EE has flow rate=3; tunnels lead to valves FF, DD
+      //   Valve FF has flow rate=0; tunnels lead to valves EE, GG
+      //   Valve GG has flow rate=0; tunnels lead to valves FF, HH
+      //   Valve HH has flow rate=22; tunnel leads to valve GG
+      //   Valve II has flow rate=0; tunnels lead to valves AA, JJ
+      //   Valve JJ has flow rate=21; tunnel leads to valve II`,
+      //   expected: 1651,
+      // },
     ],
     solution: part1,
   },
   part2: {
     tests: [
-      {
-        input: `
-        Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
-        Valve BB has flow rate=13; tunnels lead to valves CC, AA
-        Valve CC has flow rate=2; tunnels lead to valves DD, BB
-        Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE
-        Valve EE has flow rate=3; tunnels lead to valves FF, DD
-        Valve FF has flow rate=0; tunnels lead to valves EE, GG
-        Valve GG has flow rate=0; tunnels lead to valves FF, HH
-        Valve HH has flow rate=22; tunnel leads to valve GG
-        Valve II has flow rate=0; tunnels lead to valves AA, JJ
-        Valve JJ has flow rate=21; tunnel leads to valve II`,
-        expected: 1707,
-      },
+      // {
+      //   input: `
+      //   Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
+      //   Valve BB has flow rate=13; tunnels lead to valves CC, AA
+      //   Valve CC has flow rate=2; tunnels lead to valves DD, BB
+      //   Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE
+      //   Valve EE has flow rate=3; tunnels lead to valves FF, DD
+      //   Valve FF has flow rate=0; tunnels lead to valves EE, GG
+      //   Valve GG has flow rate=0; tunnels lead to valves FF, HH
+      //   Valve HH has flow rate=22; tunnel leads to valve GG
+      //   Valve II has flow rate=0; tunnels lead to valves AA, JJ
+      //   Valve JJ has flow rate=21; tunnel leads to valve II`,
+      //   expected: 1707,
+      // },
     ],
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  onlyTests: false,
 });
