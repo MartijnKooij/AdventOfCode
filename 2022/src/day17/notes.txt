@@ -1,0 +1,23 @@
+Height of all blocks is 13
+
+with an input of 40 characters > 40 jets
+every 35 rocks the height grows by 53
+
+Total iterations: 1000000000000
+1000000000000 % 35 = 15
+1000000000000 - 15 = 999999999985
+Get height of 15 rocks + (999999999985 / 35) * 53
+
+with an input of 10091 characters > 10091 jets
+
+
+
+
+
+
+Guess:
+10091 - 5 rock types = 10086
+Total iterations: 1000000000000
+1000000000000 % 10086 = 9448
+1000000000000 - 9448 = 999999990552
+Get height of 9448 rocks + (999999990552 / 10086) * 53

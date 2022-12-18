@@ -108,30 +108,97 @@ const part1 = (rawInput: string) => {
 };
 
 const part2 = (rawInput: string) => {
-  const input = parseInput(rawInput);
+  const jets = parseInput(rawInput);
+  const fallenRocks: shape[] = [];
+  const towerHeight = () => fallenRocks.length ? fallenRocks.flatMap(s => s.points).map(p => p.y).sort((a, b) => a < b ? 1 : -1)[0] : 0;
 
-  return;
+  let rockType = 0;
+  let jetType = 0;
+  const combos = [];
+  for (let rockNumber = 0; rockNumber < 15; rockNumber++) {
+    if (rockNumber % 100 === 0) {
+      console.log('Still going...', rockNumber);
+    }
+    const rock = JSON.parse(JSON.stringify(rockShapes[rockType])) as shape;
+
+    let rockX = 2;
+    const currentHeight = towerHeight();
+    let rockY = fallenRocks.length ? 4 + currentHeight : 3;
+    for (const p of rock.points) {
+      p.x += rockX;
+      p.y += rockY;
+    }
+
+    while (true) {
+      let offsetX = jets[jetType] === '<' ? -1 : +1;
+      let offsetY = -1;
+
+      const hitsWall = rock.points.some(p => p.x + offsetX < 0 || p.x + offsetX >= 7);
+      const hitsRockMovingHorizontal = fallenRocks
+        .some(otherRock => otherRock.points
+          .some(otherPoint => rock.points
+            .some(rockPoint => rockPoint.x + offsetX === otherPoint.x && rockPoint.y === otherPoint.y)));
+      if (!hitsWall && !hitsRockMovingHorizontal) {
+        rockX += offsetX;
+        for (const p of rock.points) {
+          p.x += offsetX;
+        }
+      }
+
+      const hitsFloor = rock.points.some(p => p.y + offsetY < 0);
+      const hitsRockMovingVertical = fallenRocks
+        .some(otherRock => otherRock.points
+          .some(otherPoint => rock.points
+            .some(rockPoint => rockPoint.x === otherPoint.x && rockPoint.y + offsetY === otherPoint.y)));
+      if (!hitsFloor && !hitsRockMovingVertical) {
+        rockY += offsetY;
+        for (const p of rock.points) {
+          p.y += offsetY;
+        }
+      }
+
+      jetType++;
+      if (jetType >= jets.length) jetType = 0;
+      combos.push({rockNumber: rockNumber, jetType: jetType, rockType: rockType, towerHeight: currentHeight});
+
+      if (hitsFloor || hitsRockMovingVertical) {
+        break;
+      }
+    }
+
+    rockType++;
+    if (rockType >= rockShapes.length) rockType = 0;
+    fallenRocks.push(rock);
+  }
+
+  const maxY = towerHeight();
+  fs.writeFileSync('./src/day17/log.txt', combos.map(c => JSON.stringify(c)).join('\n'));
+
+  // Test Data
+  return maxY + 1 + (Math.floor(999999999985 / 35) * 53);
+  // Real Data
+  return maxY + 1 + (Math.floor(999999990552 / 10086) * 53);
 };
 
 run({
   part1: {
     tests: [
-      {
-        input: `>>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>`,
-        expected: 3068,
-      },
+      // {
+      //   input: `>>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>`,
+      //   expected: 3068,
+      // },
     ],
     solution: part1,
   },
   part2: {
     tests: [
-      // {
-      //   input: ``,
-      //   expected: '',
-      // },
+      {
+        input: `>>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>`,
+        expected: 1514285714288,
+      },
     ],
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: false,
+  onlyTests: true,
 });
