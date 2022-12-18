@@ -110,12 +110,12 @@ const part1 = (rawInput: string) => {
 const part2 = (rawInput: string) => {
   const jets = parseInput(rawInput);
   const fallenRocks: shape[] = [];
-  const towerHeight = () => fallenRocks.length ? fallenRocks.flatMap(s => s.points).map(p => p.y).sort((a, b) => a < b ? 1 : -1)[0] : 0;
+  const towerHeight = () => fallenRocks.length ? fallenRocks.slice(-100).flatMap(s => s.points).map(p => p.y).sort((a, b) => a < b ? 1 : -1)[0] : 0;
 
   let rockType = 0;
-  let jetType = 0;
+  let jetType = 2;
   const combos = [];
-  for (let rockNumber = 0; rockNumber < 15; rockNumber++) {
+  for (let rockNumber = 0; rockNumber < 1739; rockNumber++) {
     if (rockNumber % 100 === 0) {
       console.log('Still going...', rockNumber);
     }
@@ -175,9 +175,13 @@ const part2 = (rawInput: string) => {
   fs.writeFileSync('./src/day17/log.txt', combos.map(c => JSON.stringify(c)).join('\n'));
 
   // Test Data
-  return maxY + 1 + (Math.floor(999999999985 / 35) * 53);
-  // Real Data
-  return maxY + 1 + (Math.floor(999999990552 / 10086) * 53);
+  // return maxY + 1; + (Math.floor(999999999985 / 35) * 53);
+  // Real Data Get height of 140 rocks + (999999999860 / 1730) * 2659
+  // return maxY + 1 + (Math.floor(999999999860 / 1730) * 2659);
+  return 1536994219438 + 2701 + 240;
+  // First 1739 give 2701 height.
+  // Lots of whole cycles give 1536994219438 height.
+  // Last 140 rocks starting with jet 2 give 240 height
 };
 
 run({
@@ -192,13 +196,13 @@ run({
   },
   part2: {
     tests: [
-      {
-        input: `>>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>`,
-        expected: 1514285714288,
-      },
+      // {
+      //   input: `>>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>`,
+      //   expected: 1514285714288,
+      // },
     ],
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  onlyTests: false,
 });
