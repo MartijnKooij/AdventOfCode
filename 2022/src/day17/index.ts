@@ -109,20 +109,20 @@ const part1 = (rawInput: string) => {
 
 const part2 = (rawInput: string) => {
   const jets = parseInput(rawInput);
-  const fallenRocks: shape[] = [];
-  const towerHeight = () => fallenRocks.length ? fallenRocks.slice(-100).flatMap(s => s.points).map(p => p.y).sort((a, b) => a < b ? 1 : -1)[0] : 0;
+  let fallenRocks: shape[] = [];
+
+  let towerHeight = 0;
 
   let rockType = 0;
-  let jetType = 2;
-  const combos = [];
-  for (let rockNumber = 0; rockNumber < 1739; rockNumber++) {
+  let jetType = 0;
+  for (let rockNumber = 0; rockNumber < 1000000000000; rockNumber++) {
     if (rockNumber % 100 === 0) {
       console.log('Still going...', rockNumber);
     }
     const rock = JSON.parse(JSON.stringify(rockShapes[rockType])) as shape;
 
     let rockX = 2;
-    const currentHeight = towerHeight();
+    const currentHeight = towerHeight;
     let rockY = fallenRocks.length ? 4 + currentHeight : 3;
     for (const p of rock.points) {
       p.x += rockX;
@@ -159,7 +159,6 @@ const part2 = (rawInput: string) => {
 
       jetType++;
       if (jetType >= jets.length) jetType = 0;
-      combos.push({rockNumber: rockNumber, jetType: jetType, rockType: rockType, towerHeight: currentHeight});
 
       if (hitsFloor || hitsRockMovingVertical) {
         break;
@@ -168,17 +167,23 @@ const part2 = (rawInput: string) => {
 
     rockType++;
     if (rockType >= rockShapes.length) rockType = 0;
+    const rockHeight = rock.points.map(p => p.y).sort((a, b) => a < b ? 1 : -1)[0];
     fallenRocks.push(rock);
+    fallenRocks = fallenRocks.slice(-500);
+    if (rockHeight > towerHeight) {
+      towerHeight = rockHeight;
+    }
   }
 
-  const maxY = towerHeight();
-  fs.writeFileSync('./src/day17/log.txt', combos.map(c => JSON.stringify(c)).join('\n'));
+  const maxY = towerHeight;
+  return maxY + 1;
+  // fs.writeFileSync('./src/day17/log.txt', combos.map(c => JSON.stringify(c)).join('\n'));
 
   // Test Data
-  // return maxY + 1; + (Math.floor(999999999985 / 35) * 53);
+  // return maxY + 1 + (Math.floor(999999999985 / 35) * 53);
   // Real Data Get height of 140 rocks + (999999999860 / 1730) * 2659
   // return maxY + 1 + (Math.floor(999999999860 / 1730) * 2659);
-  return 1536994219438 + 2701 + 240;
+  // return 1536994219438 + 2701 + 240;
   // First 1739 give 2701 height.
   // Lots of whole cycles give 1536994219438 height.
   // Last 140 rocks starting with jet 2 give 240 height
