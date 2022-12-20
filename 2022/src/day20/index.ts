@@ -1,31 +1,34 @@
 import run from 'aocrunner';
-import * as crypto from 'crypto';
-import { RingBuffer } from '../utils/ring-buffer.js';
 
-type coordinate = {id: string, value: number};
-const parseInput = (rawInput: string): coordinate[] => rawInput.split('\n').map((l) => {
-  return { id: crypto.randomUUID(), value: Number(l) };
-});
+const parseInput = (rawInput: string): number[] => rawInput.trim().split('\n').filter(l => !!l).map(l => Number(l.trim()));
 
 const part1 = (rawInput: string) => {
-  const values = parseInput(rawInput);
-  const coordinates = new RingBuffer<coordinate>(values.length);
-  coordinates.fromArray(values)
+  const source = parseInput(rawInput);
+  const copy = [...source];
 
-  for (const value of values) {
-    const indexOfItem = coordinates.toArray().findIndex(c => c.id === value.id);
-    if (indexOfItem < 0) {
-      console.log('Index not found', indexOfItem, value, coordinates.toArray());
-      throw new Error('Item not found?');
-    }
+  for (const value of source) {
+    console.log('before', value, copy.join(','));
+    const valueIndex = copy.indexOf(value);
 
-    coordinates.move(indexOfItem, indexOfItem + value.value);
+    copy.splice(valueIndex, 1);
+    let newIndex = (valueIndex + value) % copy.length;
+    // if (newIndex === 0) newIndex = copy.length -1;
+    copy.splice(newIndex, 0, value);
+
+    console.log('after', valueIndex, newIndex, copy.join(','));
   }
 
-  console.log(coordinates.toArray());
+  const zeroIndex = copy.indexOf(0);
+  console.log(copy.join(','), zeroIndex);
 
-  return;
-};
+  if (copy.join(',') !== '1,2,-3,4,0,3,-2') console.error('out of order...'.toUpperCase());
+
+  return [
+    copy[(1000 + zeroIndex) % copy.length],
+    copy[(2000 + zeroIndex) % copy.length],
+    copy[(3000 + zeroIndex) % copy.length]
+  ].reduce((p, c) => p + c, 0);
+}
 
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
