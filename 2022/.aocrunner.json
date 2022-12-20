@@ -314,20 +314,20 @@
     },
     {
       "part1": {
-        "solved": false,
-        "result": "-11106",
+        "solved": true,
+        "result": "7228",
         "attempts": [
           "-7163",
           "-7836",
           "-11106"
         ],
-        "time": 20.2305
+        "time": 105.5159
       },
       "part2": {
-        "solved": false,
-        "result": null,
+        "solved": true,
+        "result": "4526232706281",
         "attempts": [],
-        "time": null
+        "time": 759.7501
       }
     },
     {
