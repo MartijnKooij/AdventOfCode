@@ -3,12 +3,10 @@ import * as fs from 'fs';
 
 type point = { x: number, y: number };
 
-let offset = 0;
-
 const dist = (start: point, end: point): number => Math.abs(end.x - start.x) + Math.abs(end.y - start.y);
 
 const part1 = (rawInput: string) => {
-  offset = 1500000;
+  const offset = 1500000;
   const mapY = 2000000 + offset;
 
   const drawRange = (map: string[], center: point, distance: number): string[] => {
@@ -85,6 +83,8 @@ const line = (start: point, end: point): point[] => {
 type scan = { id: number, topToRight: point[], rightToBottom: point[], bottomToLeft: point[], leftToTop: point[], center: point, beacon: point, distance: number };
 
 const part2 = (rawInput: string) => {
+  const offset = 0;
+
   const parseInput = (rawInput: string): scan[] => rawInput.split('\n').map((l, i) => {
     const pointData = l.replace(/x=/g, '').replace(/y=/g, '').replace('Sensor at ', '').replace(' closest beacon is at ', '');
     const points = pointData.split(':').map((p) => {
@@ -121,15 +121,28 @@ const part2 = (rawInput: string) => {
     }
   }
 
+  const drawScan = (scan: scan) => {
+    for (let y = scan.center.y - scan.distance; y <= scan.center.y + scan.distance; y++) {
+      for (let x = scan.center.x - scan.distance; x <= scan.center.x + scan.distance; x++) {
+        if (x >= 0 && x < limits.x && y >= 0 && y < limits.y) {
+          if (dist(scan.center, { x, y }) <= scan.distance && map[y][x] === '.') {
+            map[y][x] = '#';
+          }
+        }
+      }
+    }
+    return map;
+  }
+
   const findFreePoint = (points: point[], scanId: number): point | null => {
     for (const pointToFind of points) {
       const isOnAnyLine = scans
         .filter(scan => scan.id !== scanId)
         .some(scan =>
-          scan.topToRight.every(p => p.x !== pointToFind.x && p.y !== pointToFind.y)
-          || scan.rightToBottom.every(p => p.x !== pointToFind.x && p.y !== pointToFind.y)
-          || scan.bottomToLeft.every(p => p.x !== pointToFind.x && p.y !== pointToFind.y)
-          || scan.leftToTop.every(p => p.x !== pointToFind.x && p.y !== pointToFind.y));
+          scan.topToRight.some(p => p.x === pointToFind.x && p.y === pointToFind.y)
+          || scan.rightToBottom.some(p => p.x === pointToFind.x && p.y === pointToFind.y)
+          || scan.bottomToLeft.some(p => p.x === pointToFind.x && p.y === pointToFind.y)
+          || scan.leftToTop.some(p => p.x === pointToFind.x && p.y === pointToFind.y));
 
       if (isOnAnyLine) return null;
       return pointToFind;
@@ -147,20 +160,22 @@ const part2 = (rawInput: string) => {
 
   let freePoint = null;
   for (const scan of scans) {
-    drawLine(scan.topToRight);
-    drawLine(scan.rightToBottom);
-    drawLine(scan.bottomToLeft);
-    drawLine(scan.leftToTop);
+    // drawLine(scan.topToRight);
+    // drawLine(scan.rightToBottom);
+    // drawLine(scan.bottomToLeft);
+    // drawLine(scan.leftToTop);
+    drawScan(scan);
     freePoint = findFreePoint(scan.topToRight, scan.id);
-    if (freePoint) return freePoint;
+    if (freePoint) break;
     freePoint = findFreePoint(scan.rightToBottom, scan.id);
-    if (freePoint) return freePoint;
+    if (freePoint) break;
     freePoint = findFreePoint(scan.bottomToLeft, scan.id);
-    if (freePoint) return freePoint;
+    if (freePoint) break;
     freePoint = findFreePoint(scan.leftToTop, scan.id);
-    if (freePoint) return freePoint;
+    if (freePoint) break;
   }
 
+  console.log('free point found?', freePoint);
   fs.writeFileSync('./src/day15/map.txt', map.map(row => row.join('')).join('\n'));
 
   return 0;
