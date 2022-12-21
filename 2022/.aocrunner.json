@@ -335,15 +335,15 @@
         "solved": true,
         "result": "189250370487100",
         "attempts": [],
-        "time": 76.2305
+        "time": 73.1435
       },
       "part2": {
-        "solved": false,
-        "result": "NOT FOUND!",
+        "solved": true,
+        "result": "3715799488132",
         "attempts": [
           "400"
         ],
-        "time": 430.321
+        "time": 72.3669
       }
     },
     {

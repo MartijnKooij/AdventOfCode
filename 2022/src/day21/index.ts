@@ -95,7 +95,7 @@ const part2 = (rawInput: string) => {
   if (!human) throw new Error('No human found...');
 
   let found = false;
-  let humanValue = 3715799489000;
+  let humanValue = 3715799488131;
   let escape = 0;
   while (!found) {
     escape++;
