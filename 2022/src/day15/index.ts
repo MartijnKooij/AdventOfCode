@@ -51,23 +51,13 @@ const part1 = (rawInput: string) => {
 };
 
 type scan = {
-  id: number,
-  topToRightInner: point[],
-  rightToBottomInner: point[],
-  bottomToLeftInner: point[],
-  leftToTopInner: point[],
-  topToRightOuter: point[],
-  rightToBottomOuter: point[],
-  bottomToLeftOuter: point[],
-  leftToTopOuter: point[],
+  outline: point[],
   center: point,
-  beacon: point,
   distance: number
 };
 
 const part2 = (rawInput: string) => {
-  const offset = 0;
-  const limits: point = { x: 20, y: 20 };
+  const limits = { startX: 3000000, endX: 4000000, startY: 3000000, endY: 4000000 };
 
   const slope = (a: point, b: point): number => {
     if (a.x == b.x) {
@@ -93,7 +83,7 @@ const part2 = (rawInput: string) => {
     const coordinates: point[] = [];
     for (let x = Math.min(start.x, end.x); x <= Math.max(start.x, end.x); x++) {
       const y = m * x + b;
-      if (x >= 0 && x < limits.x && y >= 0 && y < limits.y) {
+      if (x >= limits.startX && x < limits.endX && y >= limits.startY && y < limits.endY) {
         coordinates.push({ x, y });
       }
     }
@@ -101,83 +91,63 @@ const part2 = (rawInput: string) => {
     return coordinates;
   }
 
+  const parseLength = rawInput.split('\n').length;
   const parseInput = (rawInput: string): scan[] => rawInput.split('\n').map((l, i) => {
     const pointData = l.replace(/x=/g, '').replace(/y=/g, '').replace('Sensor at ', '').replace(' closest beacon is at ', '');
     const points: point[] = pointData.split(':').map((p) => {
       const point = p.split(',').map(v => parseInt(v, 10));
-      return { x: point[0] + offset, y: point[1] + offset };
+      return { x: point[0], y: point[1] };
     });
 
-    const distance = dist(points[0], points[1]);
+    console.log(`Still parsing... ${i} / ${parseLength}`);
 
-    const topInner = { x: points[0].x, y: points[0].y - distance };
-    const rightInner = { x: points[0].x + distance, y: points[0].y };
-    const bottomInner = { x: points[0].x, y: points[0].y + distance };
-    const leftInner = { x: points[0].x - distance, y: points[0].y };
+    const distance = dist(points[0], points[1]);
 
     const topOuter = { x: points[0].x, y: points[0].y - distance - 1 };
     const rightOuter = { x: points[0].x + distance + 1, y: points[0].y };
     const bottomOuter = { x: points[0].x, y: points[0].y + distance + 1 };
     const leftOuter = { x: points[0].x - distance - 1, y: points[0].y };
 
-    return {
-      id: i,
-      topToRightInner: line(topInner, rightInner),
-      rightToBottomInner: line(rightInner, bottomInner),
-      bottomToLeftInner: line(bottomInner, leftInner),
-      leftToTopInner: line(leftInner, topInner),
+    const topToRightOuter = line(topOuter, rightOuter);
+    const rightToBottomOuter = line(rightOuter, bottomOuter);
+    const bottomToLeftOuter = line(bottomOuter, leftOuter);
+    const leftToTopOuter = line(leftOuter, topOuter);
 
-      topToRightOuter: line(topOuter, rightOuter),
-      rightToBottomOuter: line(rightOuter, bottomOuter),
-      bottomToLeftOuter: line(bottomOuter, leftOuter),
-      leftToTopOuter: line(leftOuter, topOuter),
+    let allOutlinePoints = topToRightOuter.concat(rightToBottomOuter, bottomToLeftOuter, leftToTopOuter);
+
+    return {
+      outline: allOutlinePoints,
       center: points[0],
-      beacon: points[1],
       distance
-    };
+    }
   });
 
   const scans = parseInput(rawInput);
-
-  const drawLine = (points: point[]) => {
-    for (const point of points) {
-      if (point.x >= 0 && point.x < limits.x && point.y >= 0 && point.y < limits.y) {
-        map[point.y][point.x] = '#';
-      }
-    }
-  }
-
-  const drawScan = (scan: scan) => {
-    for (let y = scan.center.y - scan.distance; y <= scan.center.y + scan.distance; y++) {
-      for (let x = scan.center.x - scan.distance; x <= scan.center.x + scan.distance; x++) {
-        if (x >= 0 && x < limits.x && y >= 0 && y < limits.y) {
-          if (dist(scan.center, { x, y }) <= scan.distance && map[y][x] === '.') {
-            map[y][x] = '#';
-          }
-        }
-      }
-    }
-    return map;
-  }
-
-  const map: string[][] = [];
-  for (let y = 0; y < limits.y; y++) {
-    map.push(''.padEnd(limits.x, '.').split(''));
-  }
-
-  // fs.writeFileSync('./src/day15/map.txt', JSON.stringify(scans));
-
-  const pointsOnEdgesOfScans = scans.flatMap(s => s.topToRightInner.concat(s.rightToBottomInner, s.bottomToLeftInner, s.leftToTopInner));
-  const pointOutsideOfScans = scans.flatMap(s => s.topToRightOuter.concat(s.rightToBottomOuter, s.bottomToLeftOuter, s.leftToTopOuter));
-
-  const freePoints = pointOutsideOfScans.filter(p => pointsOnEdgesOfScans .includes(p));
+  const pointOutsideOfScans = scans.flatMap(s => s.outline);
   let freePoint = null;
-  if (freePoints.length > 0) freePoint = freePoints[0];
+  let index = 0;
+  for (const point of pointOutsideOfScans) {
+    if (index % 5000 === 0) {
+      console.log(`Still searching... ${index} / ${pointOutsideOfScans.length}`);
+    }
+    index++;
 
+    let isPointFree = true;
+    for (const scan of scans) {
+      if (dist(point, scan.center) <= scan.distance) {
+        isPointFree = false;
+        break;
+      }
+    }
+    if (isPointFree) {
+      freePoint = point;
+      break;
+    }
+  }
+  
   console.log('free point found?', freePoint);
-  fs.writeFileSync('./src/day15/map.txt', map.map(row => row.join('')).join('\n'));
 
-  return 0;
+  return (freePoint?.x ?? 0) * 4000000 + (freePoint?.y ?? 0);
 };
 
 run({
@@ -206,27 +176,27 @@ run({
   },
   part2: {
     tests: [
-      {
-        input: `
-        Sensor at x=2, y=18: closest beacon is at x=-2, y=15
-        Sensor at x=9, y=16: closest beacon is at x=10, y=16
-        Sensor at x=13, y=2: closest beacon is at x=15, y=3
-        Sensor at x=12, y=14: closest beacon is at x=10, y=16
-        Sensor at x=10, y=20: closest beacon is at x=10, y=16
-        Sensor at x=14, y=17: closest beacon is at x=10, y=16
-        Sensor at x=8, y=7: closest beacon is at x=2, y=10
-        Sensor at x=2, y=0: closest beacon is at x=2, y=10
-        Sensor at x=0, y=11: closest beacon is at x=2, y=10
-        Sensor at x=20, y=14: closest beacon is at x=25, y=17
-        Sensor at x=17, y=20: closest beacon is at x=21, y=22
-        Sensor at x=16, y=7: closest beacon is at x=15, y=3
-        Sensor at x=14, y=3: closest beacon is at x=15, y=3
-        Sensor at x=20, y=1: closest beacon is at x=15, y=3`,
-        expected: 56000011,
-      },
+      // {
+      //   input: `
+      //   Sensor at x=2, y=18: closest beacon is at x=-2, y=15
+      //   Sensor at x=9, y=16: closest beacon is at x=10, y=16
+      //   Sensor at x=13, y=2: closest beacon is at x=15, y=3
+      //   Sensor at x=12, y=14: closest beacon is at x=10, y=16
+      //   Sensor at x=10, y=20: closest beacon is at x=10, y=16
+      //   Sensor at x=14, y=17: closest beacon is at x=10, y=16
+      //   Sensor at x=8, y=7: closest beacon is at x=2, y=10
+      //   Sensor at x=2, y=0: closest beacon is at x=2, y=10
+      //   Sensor at x=0, y=11: closest beacon is at x=2, y=10
+      //   Sensor at x=20, y=14: closest beacon is at x=25, y=17
+      //   Sensor at x=17, y=20: closest beacon is at x=21, y=22
+      //   Sensor at x=16, y=7: closest beacon is at x=15, y=3
+      //   Sensor at x=14, y=3: closest beacon is at x=15, y=3
+      //   Sensor at x=20, y=1: closest beacon is at x=15, y=3`,
+      //   expected: 56000011,
+      // },
     ],
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  onlyTests: false,
 });

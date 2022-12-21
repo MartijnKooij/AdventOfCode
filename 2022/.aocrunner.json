@@ -236,13 +236,13 @@
           "5207705",
           "5207706"
         ],
-        "time": 249.7966
+        "time": 398.4303
       },
       "part2": {
-        "solved": false,
-        "result": null,
+        "solved": true,
+        "result": "13673971349056",
         "attempts": [],
-        "time": null
+        "time": 2135.6118
       }
     },
     {
