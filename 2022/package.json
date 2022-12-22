@@ -14,8 +14,8 @@
   "author": "Martijn Kooij",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^16.11.6",
-    "aocrunner": "^1.6.1"
+    "@types/node": "^18.11.17",
+    "aocrunner": "^1.9.6"
   },
   "dependencies": {
   },

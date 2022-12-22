@@ -3,12 +3,13 @@ import * as fs from 'fs';
 
 type input = { moves: string[], map: string[][] };
 type point = { x: number, y: number };
+type move = '>' | 'v' | '<' | '^';
 
 const parseInput = (rawInput: string): input => {
   const blocks = rawInput.split('\n\n');
 
   return {
-    moves: Array.from(blocks[1].matchAll(/(\d+)([LR])/g)).map(a => a.slice(1)).flat(),
+    moves: blocks[1].match(/(\d+)|([LR])/g) ?? [],
     map: blocks[0].split('\n').filter(l => !!l).map(l => l.split(''))
   }
 };
@@ -38,31 +39,102 @@ const drawMap = (data: input) => {
   return { map, maxX: maxX + offset, maxY: maxY + offset };
 }
 
+const moveHorizontal = (map: string[][], position: point, count: number, direction: move): point => {
+  for (let m = 0; m < count; m++) {
+    let newX = position.x + (direction === '>' ? 1 : -1);
+    if (map[position.y][newX] === ' ') {
+      newX = direction === '>' ? map[position.y].findIndex(p => p !== ' ') : map[position.y].findLastIndex(p => p !== ' ');
+      if (map[position.y][newX] !== '#') {
+        position.x = newX;
+      }
+    } else if (map[position.y][newX] !== '#') {
+      position.x = newX;
+    }
+    map[position.y][position.x] = direction;
+  }
+
+  return position;
+}
+
+const findFirstNonVoidY = (map: string[][], x: number): number => {
+  for (let y = 0; y < map.length; y++) {
+    if (map[y][x] !== ' ') return y;
+  }
+  return -1;
+}
+
+const findLastNonVoidY = (map: string[][], x: number): number => {
+  for (let y = map.length - 1; y >= 0; y--) {
+    if (map[y][x] !== ' ') return y;
+  }
+  return -1;
+}
+
+const moveVertical = (map: string[][], position: point, count: number, direction: move): point => {
+  for (let m = 0; m < count; m++) {
+    let newY = position.y + (direction === '^' ? -1 : 1);
+    if (map[newY][position.x] === ' ') {
+      newY = direction === '^' ? findLastNonVoidY(map, position.x) : findFirstNonVoidY(map, position.x);
+      if (map[newY][position.x] !== '#') {
+        position.y = newY;
+      }
+    } else if (map[newY][position.x] !== '#') {
+      position.y = newY;
+    }
+    map[position.y][position.x] = direction;
+  }
+
+  return position;
+}
+
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
   const { map, maxX, maxY } = drawMap(input);
 
-  const velocity: point = { x: 0, y: 0 };
-  const position: point = { x: map[offset].findIndex(p => p === '.'), y: offset };
+  let position: point = { x: map[offset].findIndex(p => p === '.'), y: offset };
 
-  console.log('start', position);
+  console.log('start', position, input.moves);
 
+  let currentDirection = 0;
+  const availableMoves: move[] = ['>', 'v', '<', '^'];
+  map[position.y][position.x] = availableMoves[currentDirection];
   for (const move of input.moves) {
     const moves = Number(move);
-    if (isNaN(moves)) {
+    console.log('Checking move', move, moves);
 
+    if (isNaN(moves)) {
+      currentDirection += move === 'R' ? 1 : -1;
+      if (currentDirection < 0) currentDirection = availableMoves.length - 1;
+      if (currentDirection >= availableMoves.length) currentDirection = 0;
+      map[position.y][position.x] = availableMoves[currentDirection];
+
+      // console.log('Turning', move, availableMoves[currentDirection]);
     } else {
-      for (let m = 0; m < moves; m++) {
-        let newX = position.x + velocity.x;
-        let newY = position.y + velocity.y;
-        if (map[newY])
+      switch (availableMoves[currentDirection]) {
+        case '>':
+        case '<':
+          // console.log('Moving horizontally', position, moves);
+          position = moveHorizontal(map, position, moves, availableMoves[currentDirection]);
+          // console.log('Moved horizontally', position, moves);
+          break;
+        case '^':
+        case 'v':
+          // console.log('Moving vertically', position, moves);
+          position = moveVertical(map, position, moves, availableMoves[currentDirection]);
+          // console.log('Moved vertically', position, moves);
+          break;
+        default:
+          break;
       }
     }
+    map[position.y][position.x] = availableMoves[currentDirection];
   }
 
+  console.log('Done', position, availableMoves[currentDirection]);
+  fs.writeFileSync('./src/day22/log.txt', JSON.stringify(input.moves));
   fs.writeFileSync('./src/day22/map.txt', map.map(row => row.join('')).join('\n'));
 
-  return;
+  return ((position.y) * 1000) + ((position.x) * 4) + currentDirection;
 };
 
 const part2 = (rawInput: string) => {
@@ -74,24 +146,24 @@ const part2 = (rawInput: string) => {
 run({
   part1: {
     tests: [
-      {
-        input: `
-        ...#
-        .#..
-        #...
-        ....
-...#.......#
-........#...
-..#....#....
-..........#.
-        ...#....
-        .....#..
-        .#......
-        ......#.
+//       {
+//         input: `
+//         ...#
+//         .#..
+//         #...
+//         ....
+// ...#.......#
+// ........#...
+// ..#....#....
+// ..........#.
+//         ...#....
+//         .....#..
+//         .#......
+//         ......#.
 
-10R5L5R10L4R5L5`,
-        expected: 6032,
-      },
+// 10R5L5R10L4R5L5`,
+//         expected: 6032,
+//       },
     ],
     solution: part1,
   },
@@ -105,5 +177,5 @@ run({
     solution: part2,
   },
   trimTestInputs: false,
-  onlyTests: true,
+  onlyTests: false,
 });
