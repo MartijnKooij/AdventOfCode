@@ -10,14 +10,17 @@ const directions = new Map<direction, point[]>([
   ['W', [{ x: -1, y: -1 }, { x: -1, y: 0 }, { x: -1, y: 1 }]]
 ]);
 
-type elf = { current: point, next?: point, checkOrder: direction[] };
+type elf = { id: number, current: point, next?: point, checkOrder: direction[] };
 
 const parseInput = (rawInput: string) => rawInput.split('\n').map(l => l.split(''));
 
-const expandMap = (map: string[][]): string[][] => {
-  for (let y = 0; y < map.length; y++) {
-    map[y].unshift('.');
-    map[y].push('.');
+let mapXOffset = 0, mapYOffset = 0;
+let map: string[][] = [];
+
+const expandMap = (): string[][] => {
+  for (const column of map) {
+    column.unshift('.');
+    column.push('.');
   }
 
   map.unshift(''.padEnd(map[0].length, '.').split(''));
@@ -26,45 +29,65 @@ const expandMap = (map: string[][]): string[][] => {
   return map;
 }
 
-const isFree = (elf: elf, map: string[][]): boolean => {
-  return map[elf.current.y - 1][elf.current.x - 1] === '.' &&
-    map[elf.current.y - 1][elf.current.x] === '.' &&
-    map[elf.current.y - 1][elf.current.x + 1] === '.' &&
-    map[elf.current.y][elf.current.x - 1] === '.' &&
-    map[elf.current.y][elf.current.x + 1] === '.' &&
-    map[elf.current.y + 1][elf.current.x - 1] === '.' &&
-    map[elf.current.y + 1][elf.current.x] === '.' &&
-    map[elf.current.y + 1][elf.current.x + 1] === '.';
+const getMapValue = (y: number, x: number): string => {
+  return map[y + mapYOffset][x + mapXOffset];
+}
+
+const setMapValue = (y: number, x: number, value: string): void => {
+  map[y + mapYOffset][x + mapXOffset] = value;
+}
+
+const isFree = (elf: elf): boolean => {
+  return getMapValue(elf.current.y - 1, elf.current.x - 1) === '.' &&
+    getMapValue(elf.current.y - 1, elf.current.x) === '.' &&
+    getMapValue(elf.current.y - 1, elf.current.x + 1) === '.' &&
+    getMapValue(elf.current.y, elf.current.x - 1) === '.' &&
+    getMapValue(elf.current.y, elf.current.x + 1) === '.' &&
+    getMapValue(elf.current.y + 1, elf.current.x - 1) === '.' &&
+    getMapValue(elf.current.y + 1, elf.current.x) === '.' &&
+    getMapValue(elf.current.y + 1, elf.current.x + 1) === '.';
 }
 
 const tryMove = (elf: elf, map: string[][], direction: direction): { moved: boolean, next: point } => {
   const checkPoints: point[] = directions.get(direction)!;
   let next: point = { x: 0, y: 0 };
+  let isFree = true;
   for (const check of checkPoints) {
     next = { x: elf.current.x + check.x, y: elf.current.y + check.y };
-    if (map[next.y][next.x] === '.') return { moved: true, next };
+    if (getMapValue(next.y, next.x) === '#') {
+      isFree = false;
+      break;
+    }
   }
-  return { moved: false, next };
+  if (isFree) {
+    return { moved: true, next: { x: elf.current.x + checkPoints[1].x, y: elf.current.y + checkPoints[1].y } }
+  }
+  return { moved: false, next: { x: 0, y: 0 } };
 }
 
 const part1 = (rawInput: string) => {
-  let map = parseInput(rawInput);
+  map = parseInput(rawInput);
+  const maps = [];
+  maps.push(map);
   const elves: elf[] = [];
 
   for (let y = 0; y < map.length; y++) {
     for (let x = 0; x < map[y].length; x++) {
-      if (map[y][x] === '#') {
-        elves.push({ current: { x, y }, checkOrder: ['N', 'S', 'W', 'E'] });
+      if (getMapValue(y, x) === '#') {
+        elves.push({ id: elves.length, current: { x, y }, checkOrder: ['N', 'S', 'W', 'E'] });
       }
     }
   }
 
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (let round = 0; round < 10; round++) {
+  for (let round = 0; round < 2; round++) {
+    maps.push(map);
     // Propose new locations
     for (const elf of elves) {
       elf.next = undefined;
-      if (isFree(elf, map)) continue;
+      console.log('check', elf.id, elf.checkOrder);
+
+      if (isFree(elf)) continue;
       for (const direction of elf.checkOrder) {
         const { moved, next } = tryMove(elf, map, direction);
         if (moved) {
@@ -76,23 +99,36 @@ const part1 = (rawInput: string) => {
     }
 
     // Move
-    for (const elf of elves.filter(e => !!e.next)) {
+    const movingElves = elves.filter(e => !!e.next);
+    for (const elf of movingElves) {
+      if (movingElves.some(e => e.next?.x === elf.next?.x && e.next?.y === elf.next?.y && e.id != elf.id)) continue;
+
       minX = Math.min(minX, elf.next?.x ?? Infinity);
       maxX = Math.max(maxX, elf.next?.x ?? -Infinity);
       minY = Math.min(minY, elf.next?.y ?? Infinity);
       maxY = Math.max(maxY, elf.next?.y ?? -Infinity);
 
-      map[elf.current.y][elf.current.x] = '.';
-      map[elf.next?.y!][elf.next?.x!] = '#';
+      console.log('moving', round, elf.id, elf.current, elf.next);
+      setMapValue(elf.current.y, elf.current.x, '.');
+      setMapValue(elf.next?.y!, elf.next?.x!, '#');
+      elf.current = elf.next!;
     }
+    console.log('elves', elves.map(e => e.current), map.map(r => r.join('')).join('-'));
 
     // Expand map if needed
-    if (maxX - minX > map[0].length || maxY - minY > map.length) {
-      map = expandMap(map);
+    if (Math.abs(minX - 1) > mapXOffset || Math.abs(minY - 1) > mapYOffset ||
+      maxX - minX + 1 > map[0].length || maxY - minY + 1 > map.length) {
+      if (minX - 1 < 0) mapXOffset = Math.abs(minX - 1);
+      if (minY - 1 < 0) mapYOffset = Math.abs(minY - 1);
+
+      console.log('expanding', minX, maxX, minY, maxY, mapXOffset, mapYOffset);
+
+      expandMap();
     }
   }
+  maps.push(map);
 
-  fs.writeFileSync('./src/day23/map.txt', map.map(row => row.join('')).join('\n'));
+  fs.writeFileSync('./src/day23/map.txt', maps.map(map => map.map(row => row.join('')).join('\n')).join('\n\n'));
 
   return;
 };
@@ -108,18 +144,12 @@ run({
     tests: [
       {
         input: `
-        ..............
-        ..............
-        .......#......
-        .....###.#....
-        ...#...#.#....
-        ....#...##....
-        ...#.###......
-        ...##.#.##....
-        ....#..#......
-        ..............
-        ..............
-        ..............`,
+        .....
+        ..##.
+        ..#..
+        .....
+        ..##.
+        .....`,
         expected: 110,
       },
     ],
