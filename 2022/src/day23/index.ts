@@ -14,27 +14,32 @@ type elf = { id: number, current: point, next?: point, checkOrder: direction[] }
 
 const parseInput = (rawInput: string) => rawInput.split('\n').map(l => l.split(''));
 
-let mapXOffset = 0, mapYOffset = 0;
 let map: string[][] = [];
 
-const expandMap = (): string[][] => {
-  for (const column of map) {
-    column.unshift('.');
-    column.push('.');
-  }
+const expandMap = (count: number): string[][] => {
+  for (let c = 0; c < count; c++) {
+    for (const column of map) {
+      column.unshift('.');
+      column.push('.');
+    }
 
-  map.unshift(''.padEnd(map[0].length, '.').split(''));
-  map.push(''.padEnd(map[0].length, '.').split(''));
+    map.unshift(''.padEnd(map[0].length, '.').split(''));
+    map.push(''.padEnd(map[0].length, '.').split(''));
+  }
 
   return map;
 }
 
 const getMapValue = (y: number, x: number): string => {
-  return map[y + mapYOffset][x + mapXOffset];
+  if (y < 0 || y >= map.length || x < 0 || x >= map[0].length) {
+    console.log('MAP IS TOO SMALL!');
+    return '#'
+  };
+  return map[y][x];
 }
 
 const setMapValue = (y: number, x: number, value: string): void => {
-  map[y + mapYOffset][x + mapXOffset] = value;
+  map[y][x] = value;
 }
 
 const isFree = (elf: elf): boolean => {
@@ -48,7 +53,7 @@ const isFree = (elf: elf): boolean => {
     getMapValue(elf.current.y + 1, elf.current.x + 1) === '.';
 }
 
-const tryMove = (elf: elf, map: string[][], direction: direction): { moved: boolean, next: point } => {
+const tryMove = (elf: elf, direction: direction): { moved: boolean, next: point } => {
   const checkPoints: point[] = directions.get(direction)!;
   let next: point = { x: 0, y: 0 };
   let isFree = true;
@@ -67,8 +72,8 @@ const tryMove = (elf: elf, map: string[][], direction: direction): { moved: bool
 
 const part1 = (rawInput: string) => {
   map = parseInput(rawInput);
-  const maps = [];
-  maps.push(map);
+  expandMap(10);
+  const debugMaps: string[][][] = [];
   const elves: elf[] = [];
 
   for (let y = 0; y < map.length; y++) {
@@ -80,27 +85,29 @@ const part1 = (rawInput: string) => {
   }
 
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (let round = 0; round < 2; round++) {
-    maps.push(map);
+  let didAnyoneMove = false;
+  // console.log('elves', elves.map(e => e.current), '\n', map.map(r => r.join('')).join('\n'));
+  for (let round = 0; round < 10; round++) {
+    didAnyoneMove = false;
+    debugMaps.push(JSON.parse(JSON.stringify(map)));
     // Propose new locations
     for (const elf of elves) {
       elf.next = undefined;
-      console.log('check', elf.id, elf.checkOrder);
 
       if (isFree(elf)) continue;
       for (const direction of elf.checkOrder) {
-        const { moved, next } = tryMove(elf, map, direction);
+        const { moved, next } = tryMove(elf, direction);
         if (moved) {
           elf.next = next;
           break;
         }
       }
-      elf.checkOrder.push(elf.checkOrder.shift()!);
     }
 
     // Move
     const movingElves = elves.filter(e => !!e.next);
     for (const elf of movingElves) {
+      didAnyoneMove = true;
       if (movingElves.some(e => e.next?.x === elf.next?.x && e.next?.y === elf.next?.y && e.id != elf.id)) continue;
 
       minX = Math.min(minX, elf.next?.x ?? Infinity);
@@ -108,29 +115,48 @@ const part1 = (rawInput: string) => {
       minY = Math.min(minY, elf.next?.y ?? Infinity);
       maxY = Math.max(maxY, elf.next?.y ?? -Infinity);
 
-      console.log('moving', round, elf.id, elf.current, elf.next);
+      // console.log('moving', round, elf.id, elf.current, elf.next);
       setMapValue(elf.current.y, elf.current.x, '.');
       setMapValue(elf.next?.y!, elf.next?.x!, '#');
-      elf.current = elf.next!;
+      elf.current = { x: elf.next?.x!, y: elf.next?.y! };
     }
-    console.log('elves', elves.map(e => e.current), map.map(r => r.join('')).join('-'));
+
+    // Update check order
+    for (const elf of elves) {
+      elf.checkOrder.push(elf.checkOrder.shift()!);
+    }
+
+    // console.log('elves', elves.map(e => e.current));
+    if (!didAnyoneMove) break;
 
     // Expand map if needed
-    if (Math.abs(minX - 1) > mapXOffset || Math.abs(minY - 1) > mapYOffset ||
-      maxX - minX + 1 > map[0].length || maxY - minY + 1 > map.length) {
-      if (minX - 1 < 0) mapXOffset = Math.abs(minX - 1);
-      if (minY - 1 < 0) mapYOffset = Math.abs(minY - 1);
+    // if (Math.abs(minX - 1) > mapXOffset || Math.abs(minY - 1) > mapYOffset ||
+    //   maxX - minX + 1 > map[0].length || maxY - minY + 1 > map.length) {
+    //   if (minX - 1 < 0) mapXOffset = Math.abs(minX - 1);
+    //   if (minY - 1 < 0) mapYOffset = Math.abs(minY - 1);
 
-      console.log('expanding', minX, maxX, minY, maxY, mapXOffset, mapYOffset);
+    //   console.log('expanding', minX, maxX, minY, maxY, mapXOffset, mapYOffset);
 
-      expandMap();
-    }
+    //   expandMap();
+    // }
   }
-  maps.push(map);
+  debugMaps.push(JSON.parse(JSON.stringify(map)));
 
-  fs.writeFileSync('./src/day23/map.txt', maps.map(map => map.map(row => row.join('')).join('\n')).join('\n\n'));
+  const debugLog = debugMaps
+    .map(map => map
+      .map(row => row.join('')).join('\n'))
+      .map((l, i) => `\n\n== End of Round ${i} ==\n` + l);
+  fs.writeFileSync('./src/day23/map.txt', debugLog.join('\n'));
+  console.log(minX, maxX, minY, maxY);
+  let freeSpots = 0;
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
+      if (map[y][x] === '.') freeSpots++;
+    }
 
-  return;
+  }
+
+  return freeSpots;
 };
 
 const part2 = (rawInput: string) => {
@@ -144,12 +170,18 @@ run({
     tests: [
       {
         input: `
-        .....
-        ..##.
-        ..#..
-        .....
-        ..##.
-        .....`,
+        ..............
+        ..............
+        .......#......
+        .....###.#....
+        ...#...#.#....
+        ....#...##....
+        ...#.###......
+        ...##.#.##....
+        ....#..#......
+        ..............
+        ..............
+        ..............`,
         expected: 110,
       },
     ],
@@ -165,6 +197,6 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  onlyTests: false,
 });
 
