@@ -160,9 +160,65 @@ const part1 = (rawInput: string) => {
 };
 
 const part2 = (rawInput: string) => {
-  const input = parseInput(rawInput);
+  map = parseInput(rawInput);
+  expandMap(200);
+  const elves: elf[] = [];
 
-  return;
+  for (let y = 0; y < map.length; y++) {
+    for (let x = 0; x < map[y].length; x++) {
+      if (getMapValue(y, x) === '#') {
+        elves.push({ id: elves.length, current: { x, y }, checkOrder: ['N', 'S', 'W', 'E'] });
+      }
+    }
+  }
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  let didAnyoneMove = false;
+  let round = 0;
+  while (true) {
+    round ++;
+    didAnyoneMove = false;
+    // Propose new locations
+    for (const elf of elves) {
+      elf.next = undefined;
+
+      if (isFree(elf)) continue;
+      for (const direction of elf.checkOrder) {
+        const { moved, next } = tryMove(elf, direction);
+        if (moved) {
+          elf.next = next;
+          break;
+        }
+      }
+    }
+
+    // Move
+    const movingElves = elves.filter(e => !!e.next);
+    for (const elf of movingElves) {
+      didAnyoneMove = true;
+      if (movingElves.some(e => e.next?.x === elf.next?.x && e.next?.y === elf.next?.y && e.id != elf.id)) continue;
+
+      minX = Math.min(minX, elf.next?.x ?? Infinity);
+      maxX = Math.max(maxX, elf.next?.x ?? -Infinity);
+      minY = Math.min(minY, elf.next?.y ?? Infinity);
+      maxY = Math.max(maxY, elf.next?.y ?? -Infinity);
+
+      setMapValue(elf.current.y, elf.current.x, '.');
+      setMapValue(elf.next?.y!, elf.next?.x!, '#');
+      elf.current = { x: elf.next?.x!, y: elf.next?.y! };
+    }
+
+    // Update check order
+    for (const elf of elves) {
+      elf.checkOrder.push(elf.checkOrder.shift()!);
+    }
+
+    if (!didAnyoneMove) {
+      return  round;
+    }
+  }
+
+  return 'Not finished!';
 };
 
 run({
@@ -189,10 +245,22 @@ run({
   },
   part2: {
     tests: [
-      // {
-      //   input: ``,
-      //   expected: '',
-      // },
+      {
+        input: `
+        ..............
+        ..............
+        .......#......
+        .....###.#....
+        ...#...#.#....
+        ....#...##....
+        ...#.###......
+        ...##.#.##....
+        ....#..#......
+        ..............
+        ..............
+        ..............`,
+        expected: 20,
+      },
     ],
     solution: part2,
   },
