@@ -239,13 +239,16 @@ const part2 = (rawInput: string) => {
   }
 
   const findNextXWhenExitOnTheRight = (map: string[][], currentPosition: point): point => {
+    // TODO: Change directions as well!!!
     if (isInCubeFace(1, currentPosition)) {
       // 1 > 6, moving <, invert y
       return { x: cubes[6].mapStart.x + faceSize - 1, y: faceSize - Math.floor((currentPosition.y + 1) / faceSize) };
     } else if (isInCubeFace(4, currentPosition)) {
       // 4 > 6, moving v, x becomes y offset
-      console.log('Leaving 4 v 6?', Math.floor((currentPosition.y) / faceSize), { x: cubes[6].mapStart.x + faceSize - Math.floor((currentPosition.y + 1) / faceSize), y: cubes[6].mapStart.y });
-      return { x: cubes[6].mapStart.x + Math.floor((currentPosition.y) / faceSize), y: cubes[6].mapStart.y };
+      return { x: cubes[6].mapStart.x + faceSize - 1 - Math.floor((currentPosition.y) / faceSize), y: cubes[6].mapStart.y };
+    } else if (isInCubeFace(6, currentPosition)) {
+      // 6 > 1, moving <, y inverted
+      return { x: cubes[1].mapStart.x + faceSize - 1, y: faceSize - Math.floor((currentPosition.y + 1) / faceSize) };
     }
 
     // Normal wrap around
