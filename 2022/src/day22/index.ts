@@ -3,7 +3,8 @@ import * as fs from 'fs';
 
 type input = { moves: string[], map: string[][] };
 type point = { x: number, y: number };
-type move = '>' | 'v' | '<' | '^';
+type direction = '>' | 'v' | '<' | '^';
+type move = { d: direction, p: point };
 
 const offset = 1;
 const drawMap = (data: input) => {
@@ -40,7 +41,7 @@ const part1 = (rawInput: string) => {
     }
   };
 
-  const moveHorizontal = (map: string[][], position: point, count: number, direction: move): point => {
+  const moveHorizontal = (map: string[][], position: point, count: number, direction: direction): point => {
     for (let m = 0; m < count; m++) {
       let newX = position.x + (direction === '>' ? 1 : -1);
       if (map[position.y][newX] === ' ') {
@@ -71,7 +72,7 @@ const part1 = (rawInput: string) => {
     return -1;
   }
 
-  const moveVertical = (map: string[][], position: point, count: number, direction: move): point => {
+  const moveVertical = (map: string[][], position: point, count: number, direction: direction): point => {
     for (let m = 0; m < count; m++) {
       let newY = position.y + (direction === '^' ? -1 : 1);
       if (map[newY][position.x] === ' ') {
@@ -96,7 +97,7 @@ const part1 = (rawInput: string) => {
   console.log('start', position, input.moves);
 
   let currentDirection = 0;
-  const availableMoves: move[] = ['>', 'v', '<', '^'];
+  const availableMoves: direction[] = ['>', 'v', '<', '^'];
   map[position.y][position.x] = availableMoves[currentDirection];
   for (const move of input.moves) {
     const moves = Number(move);
@@ -211,21 +212,46 @@ const part2 = (rawInput: string) => {
 
   //fs.writeFileSync('./src/day22/map.txt', cubes.slice(1).map(cube => cube.map.map(row => row.join('')).join('\n')).join('\n\n'));
 
-  const moveHorizontal = (map: string[][], currentPosition: point, count: number, direction: move): point => {
+  const moveHorizontal = (map: string[][], currentMove: move, count: number): move => {
+    const startingMove = currentMove.d;
     for (let m = 0; m < count; m++) {
-      let newPosition = { x: currentPosition.x + (direction === '>' ? 1 : -1), y: currentPosition.y };
-      if (map[newPosition.y][newPosition.x] === ' ') {
-        newPosition = direction === '>' ? findNextXWhenExitOnTheRight(map, currentPosition) : findNextXWhenExitOnTheLeft(map, currentPosition);
-        if (map[newPosition.y][newPosition.x] !== '#') {
-          currentPosition = newPosition;
+      let newMove: move = { d: currentMove.d, p: { x: currentMove.p.x + (currentMove.d === '>' ? 1 : -1), y: currentMove.p.y } };
+      if (map[newMove.p.y][newMove.p.x] === ' ') {
+        newMove = currentMove.d === '>' ? findNextXWhenExitOnTheRight(map, currentMove.p) : findNextXWhenExitOnTheLeft(map, currentMove.p);
+        if (map[newMove.p.y][newMove.p.x] !== '#') {
+          currentMove = newMove;
         }
-      } else if (map[newPosition.y][newPosition.x] !== '#') {
-        currentPosition = newPosition;
+      } else if (map[newMove.p.y][newMove.p.x] !== '#') {
+        currentMove = newMove;
       }
-      map[currentPosition.y][currentPosition.x] = direction;
+      map[currentMove.p.y][currentMove.p.x] = currentMove.d;
+      if (currentMove.d !== startingMove && (currentMove.d === 'v' || currentMove.d === '^')) {
+        return moveVertical(map, currentMove, count - m);
+      }
     }
 
-    return currentPosition;
+    return currentMove;
+  }
+
+  const moveVertical = (map: string[][], currentMove: move, count: number): move => {
+    const startingMove = currentMove.d;
+    for (let m = 0; m < count; m++) {
+      let newMove: move = { d: currentMove.d, p: { x: currentMove.p.x, y: currentMove.p.y + (currentMove.d === '^' ? -1 : 1) } };
+      if (map[newMove.p.y][newMove.p.x] === ' ') {
+        newMove = currentMove.d === '^' ? findNextYWhenExitOnTheTop(map, currentMove.p) : findNextYWhenExitOnTheBottom(map, currentMove.p);
+        if (map[newMove.p.y][newMove.p.x] !== '#') {
+          currentMove = newMove;
+        }
+      } else if (map[newMove.p.y][newMove.p.x] !== '#') {
+        currentMove = newMove;
+      }
+      map[currentMove.p.y][currentMove.p.x] = currentMove.d;
+      if (currentMove.d !== startingMove && (currentMove.d === '<' || currentMove.d === '>')) {
+        return moveHorizontal(map, currentMove, count - m);
+      }
+    }
+
+    return currentMove;
   }
 
   const isInCubeFace = (cubeIndex: number, position: point): boolean => {
@@ -233,57 +259,92 @@ const part2 = (rawInput: string) => {
       position.y >= cubes[cubeIndex].mapStart.y && position.y < cubes[cubeIndex].mapStart.y + faceSize
   }
 
-  const findNextXWhenExitOnTheLeft = (map: string[][], currentPosition: point): point => {
-    // Normal wrap around
-    return { y: currentPosition.y, x: map[currentPosition.y].findLastIndex(p => p !== ' ') };
+  const yToXOffset = (x: number, yCube: number): number => {
+    return cubes[yCube].mapStart.y + 1 + (x % faceSize);
   }
 
-  const findNextXWhenExitOnTheRight = (map: string[][], currentPosition: point): point => {
-    // TODO: Change directions as well!!!
+  const xToYOffset = (y: number, xCube: number): number => {
+    return cubes[xCube].mapStart.x + 1 + (y % faceSize);
+  }
+
+  const invert = (xy: number): number => {
+    return faceSize - ((xy + 1) % faceSize);
+  }
+
+  const findNextXWhenExitOnTheLeft = (map: string[][], currentPosition: point): move => {
+    if (isInCubeFace(1, currentPosition)) {
+      // 1 > 3, moving v, x becomes y offset
+      return { d: 'v', p: { x: xToYOffset(currentPosition.y, 3), y: cubes[3].mapStart.y } };
+    } else if (isInCubeFace(2, currentPosition)) {
+      // 2 > 6, moving ^, y becomes x offset
+      return { d: '^', p: { x: cubes[6].mapStart.x, y: yToXOffset(currentPosition.x, 6) } };
+    } else if (isInCubeFace(5, currentPosition)) {
+      // 5 > 3, moving ^, y becomes x offset
+      return { d: '^', p: { x: cubes[3].mapStart.x, y: yToXOffset(currentPosition.x, 3) } };
+    }
+
+    // Normal wrap around
+    return { d: '<', p: { y: currentPosition.y, x: map[currentPosition.y].findLastIndex(p => p !== ' ') } };
+  }
+
+  const findNextXWhenExitOnTheRight = (map: string[][], currentPosition: point): move => {
     if (isInCubeFace(1, currentPosition)) {
       // 1 > 6, moving <, invert y
-      return { x: cubes[6].mapStart.x + faceSize - 1, y: faceSize - Math.floor((currentPosition.y + 1) / faceSize) };
+      return { d: '<', p: { x: cubes[6].mapStart.x + faceSize - 1, y: invert(currentPosition.y) } };
     } else if (isInCubeFace(4, currentPosition)) {
       // 4 > 6, moving v, x becomes y offset
-      return { x: cubes[6].mapStart.x + faceSize - 1 - Math.floor((currentPosition.y) / faceSize), y: cubes[6].mapStart.y };
+      return { d: 'v', p: { x: xToYOffset(currentPosition.y, 6), y: cubes[6].mapStart.y } };
     } else if (isInCubeFace(6, currentPosition)) {
       // 6 > 1, moving <, y inverted
-      return { x: cubes[1].mapStart.x + faceSize - 1, y: faceSize - Math.floor((currentPosition.y + 1) / faceSize) };
+      return { d: '<', p: { x: cubes[1].mapStart.x + faceSize - 1, y: invert(currentPosition.y) } };
     }
 
     // Normal wrap around
-    return { y: currentPosition.y, x: map[currentPosition.y].findIndex(p => p !== ' ') };
+    return { d: '>', p: { y: currentPosition.y, x: map[currentPosition.y].findIndex(p => p !== ' ') } };
   }
 
-  const findNextYWhenExitOnTheBottom = (map: string[][], x: number): number => {
+  const findNextYWhenExitOnTheBottom = (map: string[][], currentPosition: point): move => {
+    if (isInCubeFace(2, currentPosition)) {
+      // 2 > 5, moving ^, invert x
+      return { d: '^', p: { x: invert(currentPosition.x), y: cubes[5].mapStart.y + faceSize - 1 } };
+    } else if (isInCubeFace(3, currentPosition)) {
+      // 3 > 5, moving >, x becomes y offset
+      return { d: '>', p: { x: xToYOffset(currentPosition.y, 5), y: cubes[5].mapStart.y } };
+    } else if (isInCubeFace(5, currentPosition)) {
+      // 5 > 2, moving ^, invert x
+      return { d: '^', p: { x: invert(currentPosition.x), y: cubes[2].mapStart.y + faceSize - 1 } };
+    } else if (isInCubeFace(6, currentPosition)) {
+      // 6 > 2, moving >, x becomes y offset
+      return { d: '>', p: { x: xToYOffset(currentPosition.y, 2), y: cubes[2].mapStart.y } };
+    }
+
+    // Normal wrap around
     for (let y = 0; y < map.length; y++) {
-      if (map[y][x] !== ' ') return y;
+      if (map[y][currentPosition.x] !== ' ') return { d: 'v', p: { y, x: currentPosition.y } };
     }
-    return -1;
+    throw new Error('findNextYWhenExitOnTheBottom: Unable to wrap?');
   }
 
-  const findNextYWhenExitOnTheTop = (map: string[][], x: number): number => {
+  const findNextYWhenExitOnTheTop = (map: string[][], currentPosition: point): move => {
+    if (isInCubeFace(1, currentPosition)) {
+      // 1 > 2, moving v, invert x
+      return { d: 'v', p: { x: invert(currentPosition.x), y: cubes[2].mapStart.y } };
+    } else if (isInCubeFace(2, currentPosition)) {
+      // 2 > 1, moving v, invert x
+      return { d: 'v', p: { x: invert(currentPosition.x), y: cubes[1].mapStart.y } };
+    } else if (isInCubeFace(3, currentPosition)) {
+      // 3 > 1, moving >, y becomes x
+      return { d: '>', p: { x: cubes[1].mapStart.x, y: cubes[1].mapStart.y + currentPosition.x - 1 } };
+    } else if (isInCubeFace(6, currentPosition)) {
+      // 6 > 4, moving <, x becomes y offset
+      return { d: '<', p: { x: xToYOffset(currentPosition.y, 4), y: cubes[2].mapStart.y + faceSize - 1 } };
+    }
+
+    // Normal wrap around
     for (let y = map.length - 1; y >= 0; y--) {
-      if (map[y][x] !== ' ') return y;
+      if (map[y][currentPosition.x] !== ' ') return { d: 'v', p: { y, x: currentPosition.y } };
     }
-    return -1;
-  }
-
-  const moveVertical = (map: string[][], position: point, count: number, direction: move): point => {
-    for (let m = 0; m < count; m++) {
-      let newY = position.y + (direction === '^' ? -1 : 1);
-      if (map[newY][position.x] === ' ') {
-        newY = direction === '^' ? findNextYWhenExitOnTheTop(map, position.x) : findNextYWhenExitOnTheBottom(map, position.x);
-        if (map[newY][position.x] !== '#') {
-          position.y = newY;
-        }
-      } else if (map[newY][position.x] !== '#') {
-        position.y = newY;
-      }
-      map[position.y][position.x] = direction;
-    }
-
-    return position;
+    throw new Error('findNextYWhenExitOnTheTop: Unable to wrap?');
   }
 
   let position: point = { x: map[offset].findIndex(p => p === '.'), y: offset };
@@ -291,9 +352,12 @@ const part2 = (rawInput: string) => {
   console.log('start', position, input.moves);
 
   let currentDirection = 0;
-  const availableMoves: move[] = ['>', 'v', '<', '^'];
+  const availableMoves: direction[] = ['>', 'v', '<', '^'];
   map[position.y][position.x] = availableMoves[currentDirection];
+  let escape = 0;
   for (const move of input.moves) {
+    escape++;
+    // if (escape > 9) break;
     const moves = Number(move);
     console.log('Checking move', move, moves);
 
@@ -302,34 +366,38 @@ const part2 = (rawInput: string) => {
       if (currentDirection < 0) currentDirection = availableMoves.length - 1;
       if (currentDirection >= availableMoves.length) currentDirection = 0;
       map[position.y][position.x] = availableMoves[currentDirection];
-
-      // console.log('Turning', move, availableMoves[currentDirection]);
+      console.log('Turning', move, availableMoves[currentDirection]);
     } else {
-      switch (availableMoves[currentDirection]) {
+      let currentMove: move = { d: availableMoves[currentDirection], p: position };
+
+      switch (currentMove.d) {
         case '>':
         case '<':
-          // console.log('Moving horizontally', position, moves);
-          position = moveHorizontal(map, position, moves, availableMoves[currentDirection]);
-          // console.log('Moved horizontally', position, moves);
+          console.log('Moving horizontally', currentMove.d, currentMove.p, moves);
+          currentMove = moveHorizontal(map, currentMove, moves);
+          console.log('Moved horizontally', currentMove.d, currentMove.p, moves);
           break;
         case '^':
         case 'v':
-          // console.log('Moving vertically', position, moves);
-          position = moveVertical(map, position, moves, availableMoves[currentDirection]);
-          // console.log('Moved vertically', position, moves);
+          console.log('Moving vertically', currentMove.d, currentMove.p, moves);
+          currentMove = moveVertical(map, currentMove, moves);
+          console.log('Moved vertically', currentMove.d, currentMove.p, moves);
           break;
         default:
           break;
       }
+      position = currentMove.p
+      currentDirection = availableMoves.indexOf(currentMove.d);
+      console.log('changed direction', currentDirection);
+      map[position.y][position.x] = currentMove.d;
     }
-    map[position.y][position.x] = availableMoves[currentDirection];
   }
 
   console.log('Done', position, availableMoves[currentDirection]);
   fs.writeFileSync('./src/day22/log.txt', JSON.stringify(input.moves));
   fs.writeFileSync('./src/day22/map.txt', map.map(row => row.join('')).join('\n'));
 
-  return ((position.y) * 1000) + ((position.x) * 4) + currentDirection;
+  return ((position.y + 1) * 1000) + ((position.x + 1) * 4) + currentDirection;
 };
 
 run({
