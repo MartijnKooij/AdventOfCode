@@ -6,7 +6,8 @@ type point = { x: number, y: number };
 type direction = '>' | 'v' | '<' | '^';
 type move = { d: direction, p: point };
 
-const offset = 1;
+const part1 = (rawInput: string) => {
+  const offset = 1;
 const drawMap = (data: input) => {
   let maxX = 0;
   let maxY = 0;
@@ -31,7 +32,6 @@ const drawMap = (data: input) => {
   return { map, maxX: maxX + offset, maxY: maxY + offset };
 }
 
-const part1 = (rawInput: string) => {
   const parseInput = (rawInput: string): input => {
     const blocks = rawInput.split('\n\n');
 
@@ -184,6 +184,7 @@ const part2 = (rawInput: string) => {
 
   // Test data
   // const faceSize = 4;
+  // INPUT DATA
   const faceSize = 50;
 
   const cubeMap: string[][] = [];
@@ -202,6 +203,7 @@ const part2 = (rawInput: string) => {
   //   { id: 6, mapStart: { x: 12, y: 8 }, map: JSON.parse(JSON.stringify(cubeMap)) }
   // ];
 
+  // INPUT DATA
   const cubes: cube[] = [
     { id: 0, mapStart: { x: 404, y: 404 }, map: cubeMap }, // cube 0 does not exist...
     { id: 1, mapStart: { x: 50, y: 0 }, map: JSON.parse(JSON.stringify(cubeMap)) },
@@ -277,11 +279,11 @@ const part2 = (rawInput: string) => {
   }
 
   const yToXOffset = (x: number, yCube: number): number => {
-    return cubes[yCube].mapStart.y + 1 + (x % faceSize);
+    return cubes[yCube].mapStart.y + ((x + 1) % faceSize);
   }
 
   const xToYOffset = (y: number, xCube: number): number => {
-    return cubes[xCube].mapStart.x + 1 + (y % faceSize);
+    return cubes[xCube].mapStart.x + ((y + 1) % faceSize);
   }
 
   const invert = (offsetXY: number, xy: number): number => {
@@ -289,7 +291,6 @@ const part2 = (rawInput: string) => {
   }
 
   // TEST DATA
-
   // const findNextXWhenExitOnTheLeft = (map: string[][], currentPosition: point): move => {
   //   if (isInCubeFace(1, currentPosition)) {
   //     // 1 > 3, moving v, x becomes y offset
@@ -309,13 +310,14 @@ const part2 = (rawInput: string) => {
   // const findNextXWhenExitOnTheRight = (map: string[][], currentPosition: point): move => {
   //   if (isInCubeFace(1, currentPosition)) {
   //     // 1 > 6, moving <, invert y
-  //     return { d: '<', p: { x: cubes[6].mapStart.x + faceSize - 1, y: invert(currentPosition.y) } };
+  //     return { d: '<', p: { x: cubes[6].mapStart.x + faceSize - 1, y: invert(cubes[6].mapStart.y, currentPosition.y) } };
   //   } else if (isInCubeFace(4, currentPosition)) {
   //     // 4 > 6, moving v, x becomes y offset
+  //     console.log('Leaving 4 on the right', currentPosition.y, cubes[6].mapStart.x, faceSize);
   //     return { d: 'v', p: { x: xToYOffset(currentPosition.y, 6), y: cubes[6].mapStart.y } };
   //   } else if (isInCubeFace(6, currentPosition)) {
   //     // 6 > 1, moving <, y inverted
-  //     return { d: '<', p: { x: cubes[1].mapStart.x + faceSize - 1, y: invert(currentPosition.y) } };
+  //     return { d: '<', p: { x: cubes[1].mapStart.x + faceSize - 1, y: invert(cubes[1].mapStart.y, currentPosition.y) } };
   //   }
 
   //   // Normal wrap around
@@ -325,13 +327,14 @@ const part2 = (rawInput: string) => {
   // const findNextYWhenExitOnTheBottom = (map: string[][], currentPosition: point): move => {
   //   if (isInCubeFace(2, currentPosition)) {
   //     // 2 > 5, moving ^, invert x
-  //     return { d: '^', p: { x: invert(currentPosition.x), y: cubes[5].mapStart.y + faceSize - 1 } };
+  //     return { d: '^', p: { x: invert(cubes[5].mapStart.x, currentPosition.x), y: cubes[5].mapStart.y + faceSize - 1 } };
   //   } else if (isInCubeFace(3, currentPosition)) {
   //     // 3 > 5, moving >, x becomes y offset
   //     return { d: '>', p: { x: xToYOffset(currentPosition.y, 5), y: cubes[5].mapStart.y } };
   //   } else if (isInCubeFace(5, currentPosition)) {
   //     // 5 > 2, moving ^, invert x
-  //     return { d: '^', p: { x: invert(currentPosition.x), y: cubes[2].mapStart.y + faceSize - 1 } };
+  //     // console.log('Leaving 5 on the bottom', { d: '^', p: { x: invert(cubes[2].mapStart.x, currentPosition.x), y: cubes[2].mapStart.y + faceSize - 1 } });
+  //     return { d: '^', p: { x: invert(cubes[2].mapStart.x, currentPosition.x), y: cubes[2].mapStart.y + faceSize - 1 } };
   //   } else if (isInCubeFace(6, currentPosition)) {
   //     // 6 > 2, moving >, x becomes y offset
   //     return { d: '>', p: { x: xToYOffset(currentPosition.y, 2), y: cubes[2].mapStart.y } };
@@ -347,10 +350,10 @@ const part2 = (rawInput: string) => {
   // const findNextYWhenExitOnTheTop = (map: string[][], currentPosition: point): move => {
   //   if (isInCubeFace(1, currentPosition)) {
   //     // 1 > 2, moving v, invert x
-  //     return { d: 'v', p: { x: invert(currentPosition.x), y: cubes[2].mapStart.y } };
+  //     return { d: 'v', p: { x: invert(cubes[2].mapStart.x, currentPosition.x), y: cubes[2].mapStart.y } };
   //   } else if (isInCubeFace(2, currentPosition)) {
   //     // 2 > 1, moving v, invert x
-  //     return { d: 'v', p: { x: invert(currentPosition.x), y: cubes[1].mapStart.y } };
+  //     return { d: 'v', p: { x: invert(cubes[1].mapStart.x, currentPosition.x), y: cubes[1].mapStart.y } };
   //   } else if (isInCubeFace(3, currentPosition)) {
   //     // 3 > 1, moving >, y becomes x
   //     return { d: '>', p: { x: cubes[1].mapStart.x, y: cubes[1].mapStart.y + currentPosition.x - 1 } };
@@ -366,6 +369,7 @@ const part2 = (rawInput: string) => {
   //   throw new Error('findNextYWhenExitOnTheTop: Unable to wrap?');
   // }
 
+  // INPUT DATA
   const findNextXWhenExitOnTheLeft = (map: string[][], currentPosition: point): move => {
     if (isInCubeFace(1, currentPosition)) {
       // 1 > 4, moving >, invert y
@@ -413,8 +417,8 @@ const part2 = (rawInput: string) => {
       // 5 > 6, moving <, y becomes x offset
       return { d: '<', p: { x: cubes[6].mapStart.x + faceSize - 1, y: yToXOffset(currentPosition.x, 6) } };
     } else if (isInCubeFace(6, currentPosition)) {
-      // 6 > 2, moving v, no move
-      return { d: 'v', p: { x: cubes[2].mapStart.x, y: cubes[2].mapStart.y } };
+      // 6 > 2, moving v, offset x only
+      return { d: 'v', p: { x: cubes[2].mapStart.x + ((currentPosition.x) % faceSize), y: cubes[2].mapStart.y } };
     }
 
     // Normal wrap around
@@ -430,9 +434,9 @@ const part2 = (rawInput: string) => {
       // console.log('leaving 1 on the top', { d: '>', p: { x: cubes[6].mapStart.x, y: yToXOffset(currentPosition.x, 6) } });
       return { d: '>', p: { x: cubes[6].mapStart.x, y: yToXOffset(currentPosition.x, 6) } };
     } else if (isInCubeFace(2, currentPosition)) {
-      // 2 > 6, moving ^, no move
-      // console.log('leaving 2 on the top', { d: '^', p: { x: cubes[6].mapStart.x, y: cubes[1].mapStart.y + faceSize - 1 } });
-      return { d: '^', p: { x: cubes[6].mapStart.x, y: cubes[6].mapStart.y + faceSize - 1 } };
+      // 2 > 6, moving ^, offset x only
+      // console.log('leaving 2 on the top', currentPosition.x, { d: '^', p: { x: cubes[6].mapStart.x + ((currentPosition.x) % faceSize), y: cubes[6].mapStart.y + faceSize - 1 } });
+      return { d: '^', p: { x: cubes[6].mapStart.x + ((currentPosition.x) % faceSize), y: cubes[6].mapStart.y + faceSize - 1 } };
     } else if (isInCubeFace(4, currentPosition)) {
       // 4 > 3, moving >, y becomes x offset
       return { d: '>', p: { x: cubes[3].mapStart.x, y: yToXOffset(currentPosition.x, 3) } };
@@ -455,8 +459,8 @@ const part2 = (rawInput: string) => {
   let escape = 0;
   for (const move of input.moves) {
     escape++;
-    // console.log('debug', position, availableMoves[currentDirection]);
-    // if (escape > 877) break;
+    // console.log('debug', position, availableMoves[currentDirection], move);
+    // if (escape > 1964) break;
     const moves = Number(move);
     // console.log('Checking move', move, moves);
 
@@ -492,10 +496,11 @@ const part2 = (rawInput: string) => {
     }
   }
 
-  console.log('Done', position, availableMoves[currentDirection]);
+  console.log('Done', escape, position, availableMoves[currentDirection]);
   fs.writeFileSync('./src/day22/log.txt', JSON.stringify(input.moves));
   fs.writeFileSync('./src/day22/map.txt', map.map(row => row.join('')).join('\n'));
 
+  // +1 for the 1 based rows...
   return ((position.y + 1) * 1000) + ((position.x + 1) * 4) + currentDirection;
 };
 
@@ -525,24 +530,24 @@ run({
   },
   part2: {
     tests: [
-      //       {
-      //         input: `
-      //         ...#
-      //         .#..
-      //         #...
-      //         ....
-      // ...#.......#
-      // ........#...
-      // ..#....#....
-      // ..........#.
-      //         ...#....
-      //         .....#..
-      //         .#......
-      //         ......#.
+//       {
+//         input: `
+//         ...#
+//         .#..
+//         #...
+//         ....
+// ...#.......#
+// ........#...
+// ..#....#....
+// ..........#.
+//         ...#....
+//         .....#..
+//         .#......
+//         ......#.
 
-      // 10R5L5R10L4R5L5`,
-      //         expected: 5031,
-      //       },
+// 10R5L5R10L4R5L5`,
+//         expected: 5031,
+//       },
     ],
     solution: part2,
   },
