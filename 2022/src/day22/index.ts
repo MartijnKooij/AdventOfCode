@@ -512,7 +512,7 @@ const part2 = (rawInput: string) => {
   for (const move of input.moves) {
     escape++;
     // console.log('debug', position, availableMoves[currentDirection], move);
-    // if (escape > 5) break;
+    if (escape > 50) break;
     const moves = Number(move);
     // console.log('Checking move', move, moves);
 
@@ -553,6 +553,7 @@ const part2 = (rawInput: string) => {
   fs.writeFileSync('./src/day22/map.txt', map.map(row => row.join('')).join('\n'));
 
   // +1 for the 1 based rows...
+  // Should probably become 55343?
   return ((position.y + 1) * 1000) + ((position.x + 1) * 4) + currentDirection;
 };
 
