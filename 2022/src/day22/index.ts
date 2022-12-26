@@ -153,7 +153,7 @@ const part2 = (rawInput: string) => {
       map: blocks[0].split('\n').filter(l => !!l).map(l => l.split(''))
     }
   };
-
+ 
   const offset = 0;
   const drawMap = (data: input) => {
     let maxX = 0;
@@ -166,8 +166,8 @@ const part2 = (rawInput: string) => {
     }
 
     const map: string[][] = [];
-    for (let y = 0; y < maxY + 3; y++) {
-      map.push(''.padEnd(maxX + 3, ' ').split(''));
+    for (let y = 0; y < maxY + 1; y++) {
+      map.push(''.padEnd(maxX + 1, ' ').split(''));
     }
 
     for (let y = 0; y < data.map.length; y++) {
@@ -387,6 +387,8 @@ const part2 = (rawInput: string) => {
       return { d: 'v', p: { x: xToYOffset(currentPosition.y, 1), y: cubes[1].mapStart.y } };
     }
     // Normal wrap around
+    throw new Error('Normal wrap does not exist!');
+    
     return { d: '<', p: { y: currentPosition.y, x: map[currentPosition.y].findLastIndex(p => p !== ' ') } };
   }
 
@@ -406,6 +408,8 @@ const part2 = (rawInput: string) => {
     }
 
     // Normal wrap around
+    throw new Error('Normal wrap does not exist!');
+
     return { d: '>', p: { y: currentPosition.y, x: map[currentPosition.y].findIndex(p => p !== ' ') } };
   }
 
@@ -422,6 +426,8 @@ const part2 = (rawInput: string) => {
     }
 
     // Normal wrap around
+    throw new Error('Normal wrap does not exist!');
+
     for (let y = 0; y < map.length; y++) {
       if (map[y][currentPosition.x] !== ' ') return { d: 'v', p: { y, x: currentPosition.y } };
     }
@@ -441,8 +447,8 @@ const part2 = (rawInput: string) => {
       // 4 > 3, moving >, y becomes x offset
       return { d: '>', p: { x: cubes[3].mapStart.x, y: yToXOffset(currentPosition.x, 3) } };
     }
+    throw new Error('Normal wrap does not exist!');
 
-    // Normal wrap around
     for (let y = map.length - 1; y >= 0; y--) {
       if (map[y][currentPosition.x] !== ' ') return { d: 'v', p: { y, x: currentPosition.y } };
     }
