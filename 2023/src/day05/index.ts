@@ -32,9 +32,13 @@ const part2 = (rawInput: string) => {
 
   let smallestSeed = Number.MAX_SAFE_INTEGER;
   for (let s = 0; s < seeds.length - 1; s += 2) {
+    console.log('running seed set', s);
     const startSeed = seeds[s];
     const seedLength = seeds[s + 1];
     for (let seed = startSeed; seed < startSeed + seedLength; seed++) {
+      if (seed % 1000000 === 0) {
+        console.log('still running, seed', startSeed + seedLength - seed);
+      }
       // console.log('searching for seed', seed);
       const found = findPath(input, 1, seed);
       // console.log('found seed', seed, found);
