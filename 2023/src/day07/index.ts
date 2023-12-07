@@ -108,36 +108,22 @@ function classifyHandPart2(hand: string): string {
     const card = hand[i];
     if (card === 'J') {
       jCount++;
-    } else {
-      counts.set(card, (counts.get(card) || 0) + 1);
     }
+    counts.set(card, (counts.get(card) || 0) + 1);
+
   }
 
-  // If there are 'J' cards, distribute them in the best possible way
-  let limit = 0;
-  while (jCount > 0) {
-    let maxCount = Math.max(...counts.values());
-    if (maxCount < 4) {
-      // Add 'J' to the group with the most cards
-      for (let [card, count] of counts.entries()) {
-        if (count === maxCount) {
-          counts.set(card, count + 1);
-          jCount--;
-          break;
-        }
-      }
-    } else {
-      // All groups have 4 cards, add 'J' as a separate group
-      counts.set('J', (counts.get('J') || 0) + 1);
-      jCount--;
-    }
-    limit++;
-    if (limit > 1000) {
-      break;
+  if (jCount > 0) {
+    const highest = Array.from(counts.entries()).filter(v => v[0] !== 'J').sort((a, b) => b[1] - a[1])[0];
+    if (highest) {
+      counts.set(highest[0], highest[1] + jCount);
+      counts.delete('J');
     }
   }
+  console.log('counts', counts);
 
   const frequencies = Array.from(counts.values()).sort((a, b) => b - a);
+
   switch (frequencies.join(',')) {
     case '5':
       return 'Five of a kind';
@@ -154,6 +140,7 @@ function classifyHandPart2(hand: string): string {
     case '1,1,1,1,1':
       return 'High card';
     default:
+      console.log('invalid?', counts);
       return 'Invalid hand';
   }
 }
@@ -199,12 +186,26 @@ run({
     tests: [
       {
         input: `
-        32T3K 765
-        T55J5 684
-        KK677 28
-        KTJJT 220
-        QQQJA 483`,
-        expected: 5905,
+        2345A 1
+        Q2KJJ 13
+        Q2Q2Q 19
+        T3T3J 17
+        T3Q33 11
+        2345J 3
+        J345A 2
+        32T3K 5
+        T55J5 29
+        KK677 7
+        KTJJT 34
+        QQQJA 31
+        JJJJJ 37
+        JAAAA 43
+        AAAAJ 59
+        AAAAA 61
+        2AAAA 23
+        2JJJJ 53
+        JJJJ2 41`,
+        expected: 6839,
       },
     ],
     solution: part2,
