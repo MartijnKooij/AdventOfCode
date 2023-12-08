@@ -60,11 +60,11 @@ const part2 = (rawInput: string) => {
       break;
     }
 
-    if (i % 1000000 === 0) {
+    if (i % 10000000 === 0) {
       console.log('still going', startLocations);
     }
 
-    if (i > 10000000000) {
+    if (i > 1000000000000) {
       break; //Emergency break...
     }
   }
