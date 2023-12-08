@@ -7,7 +7,7 @@ const part1 = (rawInput: string) => {
   const instructions = input[0].split('');
   const map = stringToMap(input[1]);
 
-  console.log('data', instructions, map);
+  // console.log('data', instructions, map);
 
   let i = 0;
   let location = map.get('AAA')!;
@@ -34,43 +34,67 @@ const part2 = (rawInput: string) => {
   const instructions = input[0].split('');
   const map = stringToMap(input[1]);
 
-  console.log('data', instructions, map);
+  // console.log('data', instructions, map);
 
   let i = 0;
-  let startLocations = Array.from(map.keys()).filter(key => key.endsWith('A')).map(l => map.get(l)!);
-  console.log('start', startLocations);
+  let startLocations = Array.from(map.keys()).filter(key => key.endsWith('A'));
+  // console.log('start', startLocations);
+
+  const pathLengths = [];
+  for (let l = 0; l < startLocations.length; l++) {
+    pathLengths.push(getLength(map, instructions, startLocations[l]));
+  }
+
+  console.log('lengths', pathLengths);
+
+  const output = lcmArray(pathLengths);
+
+  console.log('output', output);
+
+  return output;
+};
+
+function getLength(map: Map<string, Map<string, string>>, instructions: string[], startKey: string): number {
+  let i = 0;
+  let location = map.get(startKey)!;
   while (true) {
     const instruction = instructions[i % instructions.length];
-    // console.log('current instruction', instruction, startLocations);
     i++;
 
-    let shouldBreak = true;
-    for (let l = 0; l < startLocations.length; l++) {
-      const location = startLocations[l];
-      const nextLocation = location.get(instruction)!;
-      if (!nextLocation.endsWith('Z')) {
-        shouldBreak = false;
-      } 
-      startLocations[l] = map.get(nextLocation)!;   
-      
-      // console.log('walking ' + l, location);
-    }
-
-    if (shouldBreak) {
+    const nextLocation = location.get(instruction)!;
+    if (nextLocation.endsWith('Z')) {
       break;
     }
+    location = map.get(nextLocation)!;
 
-    if (i % 1000000 === 0) {
-      console.log('still going', startLocations);
-    }
-
-    if (i > 10000000000) {
+    if (i > 100000) {
       break; //Emergency break...
     }
   }
 
   return i;
-};
+}
+
+function gcd(a: number, b: number): number {
+  while (b !== 0) {
+      let t = b;
+      b = a % b;
+      a = t;
+  }
+  return a;
+}
+
+function lcm(a: number, b: number): number {
+  return Math.abs(a * b) / gcd(a, b);
+}
+
+function lcmArray(numbers: number[]): number {
+  let result = numbers[0];
+  for(let i = 1; i < numbers.length; i++) {
+      result = lcm(result, numbers[i]);
+  }
+  return result;
+}
 
 function stringToMap(input: string): Map<string, Map<string, string>> {
   const map = new Map<string, Map<string, string>>();
