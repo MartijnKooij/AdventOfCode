@@ -2,20 +2,31 @@ import run from 'aocrunner';
 
 const parseInput = (rawInput: string) => rawInput.split('\n').map(l => {
   const p = l.split(' ');
-  return { 
-    springs: p[0].split(''),
-    placements: p[1].split(',').map(Number).sort((a, b) => b - a) }
+  return {
+    springs: p[0].split('').map(v => v === '?' ? '' : v),
+    placements: p[1].split(',').map(Number)
+  }
 });
 
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
 
-  input.forEach(row => {
-    console.log('row', row.springs, row.placements);
-    console.log('count', countSolutions(row.springs, row.placements));
-  });
+  // let permutations = generatePermutations(['', '', '', '.', '#', '#', '#'], [3, 1, 1]);
+  // console.table(permutations);
 
-  return 0;
+  let sum = 0;
+  for (let r = 0; r < input.length; r++) {
+    const row = input[r];
+    const permutations = generatePermutations(row.springs, row.placements);
+
+    // console.log('row', r + 1);
+    // console.log(row);
+    // console.table(permutations);
+
+    sum += permutations.length;
+  }
+
+  return sum;
 };
 
 const part2 = (rawInput: string) => {
@@ -24,59 +35,51 @@ const part2 = (rawInput: string) => {
   return;
 };
 
-function countSolutions(springs: string[], placements: number[]): number {
-  let count = 0;
-  const possibleSprings: string[] = [];
+function generatePermutations(map: string[], blocks: number[]): string[][] {
+  let results: string[][] = [];
+  let resultSet: Set<string> = new Set();
+  let totalBlockLength = blocks.reduce((a, b) => a + b, 0);
 
-  function place(springs: string[], placements: number[], index: number): void {
-    if (placements.length === 0) {
-      if (possibleSprings.includes(springs.join(''))) {
-        return;
+  function canPlaceBlock(start: number, length: number, map: string[]): boolean {
+    for (let i = start; i < start + length; i++) {
+      if (map[i] !== '' && map[i] !== '#') {
+        return false;
       }
-      possibleSprings.push(springs.join(''));
-      count++;
+    }
+    return true;
+  }
+
+  function helper(start: number, blocks: number[], current: string[]): void {
+    if (blocks.length === 0) {
+      let next = current.slice();
+      for (let i = 0; i < next.length; i++) {
+        if (next[i] === '') {
+          next[i] = '.';
+        }
+      }
+      let resultString = next.join('');
+      let blockCount = next.filter(x => x === '#').length;
+      if (!resultSet.has(resultString) && blockCount === totalBlockLength) {
+        resultSet.add(resultString);
+        results.push(next);
+      }
       return;
     }
 
-    for (let i = 0; i < placements.length; i++) {
-      if (canPlace(springs, index, placements[i])) {
-        let newSprings = [...springs];
-        for (let j = index; j < index + placements[i]; j++) {
-          newSprings[j] = '#';
+    for (let i = start; i <= map.length - blocks[0]; i++) {
+      if (canPlaceBlock(i, blocks[0], current)) {
+        let next = current.slice();
+        for (let j = 0; j < blocks[0]; j++) {
+          next[i + j] = '#';
         }
-
-        let newPlacements = [...placements];
-        newPlacements.splice(i, 1);
-
-        place(newSprings, newPlacements, index + placements[i] + 1);
+        helper(i + blocks[0] + 1, blocks.slice(1), next);
       }
     }
   }
 
-  place(springs, placements, 0);
+  helper(0, blocks, map.slice());
 
-  return count;
-}
-
-function canPlace(springs: string[], index: number, size: number): boolean {
-  if (index + size > springs.length) {
-    return false;
-  }
-
-  for (let i = index; i < index + size; i++) {
-    if (springs[i] !== '?') {
-      return false;
-    }
-  }
-
-  if (index > 0 && springs[index - 1] === '#') {
-    return false;
-  }
-  if (index + size < springs.length && springs[index + size] === '#') {
-    return false;
-  }
-
-  return true;
+  return results;
 }
 
 run({
@@ -105,5 +108,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  onlyTests: false,
 });
