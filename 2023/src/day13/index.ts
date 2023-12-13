@@ -38,7 +38,7 @@ const part1 = (rawInput: string) => {
     }
 
     total += mapTotal;
-    console.log(mapTotal);
+    // console.log(mapTotal);
   }
 
   return total;
@@ -47,7 +47,33 @@ const part1 = (rawInput: string) => {
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
 
-  return;
+  let total = 0;
+  for (let m = 0; m < input.length; m++) {
+    const map = input[m];
+    let mapTotal = 0;
+    for (let r = 0; r < map.rows.length - 1; r++) {
+      if (isReflectionWithSmudges(r, map.rows)) {
+        console.log('horizontal', r + 1);
+        mapTotal += 100 * (r + 1);
+        break;
+      }
+
+    }
+
+    for (let c = 0; c < map.columns.length - 1; c++) {
+      if (isReflectionWithSmudges(c, map.columns)) {
+        console.log('vertical', c + 1);
+        mapTotal += c + 1;
+        break;
+
+      }
+    }
+
+    total += mapTotal;
+    // console.log(mapTotal);
+  }
+
+  return total;
 };
 
 function isReflection(index: number, data: string[], step: number = 1): boolean {
@@ -59,6 +85,34 @@ function isReflection(index: number, data: string[], step: number = 1): boolean 
   }
 
   return false;
+}
+
+function isReflectionWithSmudges(index: number, data: string[], step: number = 0, smudgeCount: number = 0): boolean {
+  if (index - step < 0 || index + 1 + step >= data.length) {
+    return smudgeCount === 1;
+  }
+  const diffs = diffCount(data[index - step], data[index + 1 + step]);
+  if (diffs <= 1 && smudgeCount <= 1) {
+    return isReflectionWithSmudges(index, data, step + 1, smudgeCount + diffs);
+  }
+
+  return false;
+}
+
+function diffCount(s1: string, s2: string): number {
+  if (s1.length !== s2.length) {
+    return 500;
+  }
+  let diffCount = 0;
+  for (let i = 0; i < s1.length; i++) {
+    if (s1[i] !== s2[i]) {
+      diffCount++;
+      if (diffCount > 1) {
+        return diffCount;
+      }
+    }
+  }
+  return diffCount;
 }
 
 run({
@@ -82,16 +136,31 @@ run({
         ..##..###
         #....#..#`,
         expected: 405,
-      },
+      }
     ],
     solution: part1,
   },
   part2: {
     tests: [
-      // {
-      //   input: ``,
-      //   expected: "",
-      // },
+      {
+        input: `
+        #.##..##.
+        ..#.##.#.
+        ##......#
+        ##......#
+        ..#.##.#.
+        ..##..##.
+        #.#.##.#.
+        
+        #...##..#
+        #....#..#
+        ..##..###
+        #####.##.
+        #####.##.
+        ..##..###
+        #....#..#`,
+        expected: 400,
+      }
     ],
     solution: part2,
   },
