@@ -47,7 +47,7 @@ const part2 = (rawInput: string) => {
 
   // fs.writeFileSync(`./mapstart.txt`, map.map(l => l.join('')).join('\n'));
 
-  const cycles = 100000; // 1000000000;
+  const cycles = 1000; // 1000000000;
   for (let i = 0; i < cycles; i++) {
     for (let y = 0; y < map.length; y++) {
       for (let x = 0; x < map[y].length; x++) {
@@ -79,15 +79,53 @@ const part2 = (rawInput: string) => {
     }
     sum = calculateSum(map);
 
-    const indices = finds.has(sum) ? finds.get(sum)! : [];
+    const indices = finds.get(sum) || [];
     indices.push(i);
     finds.set(sum, indices);
   }
   // fs.writeFileSync(`./mapend.txt`, map.map(l => l.join('')).join('\n'));
-  console.table(finds);
+
+  sum = 0;
+  finds.forEach((value, key) => {
+    if (value.length > 1 && hasConsistentPattern(value)) {
+      // console.log(key, value);
+
+      const diff = (value[1] - value[0]);
+      const steps = (1000000000 - value[0]) / diff + 1;
+      if (Number.isInteger(steps)) {
+        console.log('winner?', key, steps, diff);
+        // if (steps * diff + value[0] == 1000000000) {
+          sum = key;
+        // }
+      }
+
+      // const terms = calculateTerms(value[0], diff, 1000000000);
+      // console.log('t', key, terms);
+      // if (terms * diff - 1 === 1000000000) {
+      //   console.log('winner?', key);
+      //   sum = key;
+      // }
+    }
+  });
 
   return sum;
 };
+
+function hasConsistentPattern(array: number[]): boolean {
+  let difference = array[1] - array[0];
+
+  for (let i = 2; i < array.length; i++) {
+    if (array[i] - array[i - 1] !== difference) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function calculateTerms(firstTerm: number, difference: number, target: number): number {
+  return (target - firstTerm) / difference + 1;
+}
 
 const rollDirection = (map: string[][], sx: number, sy: number, dx: number, dy: number) => {
   let px = sx;
@@ -167,7 +205,7 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  onlyTests: false,
 });
 
 
