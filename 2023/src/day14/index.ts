@@ -44,11 +44,26 @@ const part2 = (rawInput: string) => {
   const map = parseInput(rawInput);
   let sum = 0;
   const finds = new Map<number, number[]>();
+  const memo = new Map<string, number>();
 
   // fs.writeFileSync(`./mapstart.txt`, map.map(l => l.join('')).join('\n'));
 
-  const cycles = 1000; // 1000000000;
+  const cycles = 1000000000; // 1000000000;
   for (let i = 0; i < cycles; i++) {
+    if (i % 1000000 === 0) {
+      console.log('Still going', cycles - i, memo.size);
+    }
+    let key = '';
+    for (let i = 0; i < map.length; i++) {
+      for (let j = 0; j < map[i].length; j++) {
+        key += map[i][j];
+      }
+    }
+    if (memo.has(key)) {
+      sum = memo.get(key)!;
+      continue;
+    }
+
     for (let y = 0; y < map.length; y++) {
       for (let x = 0; x < map[y].length; x++) {
         if (map[y][x] === 'O') {
@@ -78,35 +93,36 @@ const part2 = (rawInput: string) => {
       }
     }
     sum = calculateSum(map);
+    memo.set(key, sum);
 
-    const indices = finds.get(sum) || [];
-    indices.push(i);
-    finds.set(sum, indices);
+    // const indices = finds.get(sum) || [];
+    // indices.push(i+1);
+    // finds.set(sum, indices);
   }
   // fs.writeFileSync(`./mapend.txt`, map.map(l => l.join('')).join('\n'));
 
-  sum = 0;
-  finds.forEach((value, key) => {
-    if (value.length > 1 && hasConsistentPattern(value)) {
-      // console.log(key, value);
+  // sum = 0;
+  // finds.forEach((value, key) => {
+  //   if (value.length > 1 && hasConsistentPattern(value)) {
+  //     // console.log(key, value);
 
-      const diff = (value[1] - value[0]);
-      const steps = (1000000000 - value[0]) / diff + 1;
-      if (Number.isInteger(steps)) {
-        console.log('winner?', key, steps, diff);
-        // if (steps * diff + value[0] == 1000000000) {
-          sum = key;
-        // }
-      }
+  //     const diff = (value[1] - value[0]);
+  //     const steps = (1000000000 - value[0]) / diff + 1;
+  //     if (Number.isInteger(steps)) {
+  //       console.log('winner?', key, steps, diff);
+  //       // if (steps * diff + value[0] == 1000000000) {
+  //         sum = key;
+  //       // }
+  //     }
 
-      // const terms = calculateTerms(value[0], diff, 1000000000);
-      // console.log('t', key, terms);
-      // if (terms * diff - 1 === 1000000000) {
-      //   console.log('winner?', key);
-      //   sum = key;
-      // }
-    }
-  });
+  //     // const terms = calculateTerms(value[0], diff, 1000000000);
+  //     // console.log('t', key, terms);
+  //     // if (terms * diff - 1 === 1000000000) {
+  //     //   console.log('winner?', key);
+  //     //   sum = key;
+  //     // }
+  //   }
+  // });
 
   return sum;
 };
@@ -205,7 +221,7 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: false,
+  onlyTests: true,
 });
 
 
