@@ -35,7 +35,6 @@ const parseInput = (rawInput: string) => rawInput.replaceAll('\\', 'B').split('\
 
 const part1 = (rawInput: string) => {
   const map = parseInput(rawInput);
-  fs.writeFileSync('./map.txt', map.map(l => l.map(n => n.sign).join('')).join('\n'));
 
   followBeam(map, '>', 0, 0);
 
@@ -47,6 +46,34 @@ const part1 = (rawInput: string) => {
   const result = map.flatMap(l => l.flatMap(n => n.energized));
 
   return result.filter(n => !!n).length;
+};
+
+const part2 = (rawInput: string) => {
+  let map = parseInput(rawInput);
+
+  const xw = map[0].length;
+  const yh = map.length;
+  const top: Direction[] = Array.from({length: xw}, (_, i) => ({ x: i, y: 0, beam: 'v' }));
+  const bottom: Direction[] = Array.from({length: xw}, (_, i) => ({ x: i, y: yh-1, beam: '^' }));
+  const left: Direction[] = Array.from({length: yh}, (_, i) => ({ x: 0, y: i, beam: '>' }));
+  const right: Direction[] = Array.from({length: yh}, (_, i) => ({ x: xw-1, y: i, beam: '<' }));
+  const starts: Direction[] = [...top, ...bottom, ...left, ...right];  
+
+  let maxEnergy = 0;
+  starts.forEach(s => {
+    map = parseInput(rawInput);
+    followBeam(map, s.beam, s.x, s.y);
+
+    const result = map.flatMap(l => l.flatMap(n => n.energized));
+  
+    const energy = result.filter(n => !!n).length;
+    if (energy > maxEnergy) {
+      console.log('better!', maxEnergy, s);
+      maxEnergy = energy;
+    }
+  });
+
+  return maxEnergy;
 };
 
 function followBeam(map: Node[][], beam: string, x: number, y: number, checked: Direction[] = []) {
@@ -110,12 +137,6 @@ function followBeam(map: Node[][], beam: string, x: number, y: number, checked: 
   }
 }
 
-const part2 = (rawInput: string) => {
-  const input = parseInput(rawInput);
-
-  return;
-};
-
 run({
   part1: {
     tests: [
@@ -128,10 +149,10 @@ run({
   },
   part2: {
     tests: [
-      // {
-      //   input: ``,
-      //   expected: "",
-      // },
+      {
+        input: fs.readFileSync('./src/day16/testinput.txt').toString(),
+        expected: 51,
+      },
     ],
     solution: part2,
   },
