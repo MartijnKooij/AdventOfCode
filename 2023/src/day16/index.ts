@@ -2,7 +2,7 @@ import run from 'aocrunner';
 import * as fs from 'fs';
 
 class Node {
-  public energized: string[] = [];
+  public energized: boolean = false;
   constructor(public sign: string) { }
 }
 
@@ -41,61 +41,62 @@ const part1 = (rawInput: string) => {
 
   fs.writeFileSync('./map.txt', map.map(l => l
     .map(n =>
-      // n.energized.length > 0 ? n.energized[0] : n.sign
-      n.energized.length > 0 && n.sign === '.'
-        ? ([...new Set(n.energized)].length === 1
-          ? n.energized[0]
-          : [...new Set(n.energized)].length)
-        : n.sign
+      n.energized ? '#' : n.sign
     ).join('')).join('\n'));
 
-  const result =  map.flatMap(l => l.flatMap(n => n.energized.length > 0));
+  const result = map.flatMap(l => l.flatMap(n => n.energized));
 
   return result.filter(n => !!n).length;
 };
 
-function followBeam(map: Node[][], beam: string, x: number, y: number, depth: number = 0) {
+function followBeam(map: Node[][], beam: string, x: number, y: number, checked: Direction[] = []) {
   let escape = 0;
   let newX = x;
   let newY = y;
-  let debug = false;
-  let rnd = Math.random();
+  // let debug = false;
+  // let rnd = Math.random();
   while (true) {
-    if (newY === 6 && newX === 7) {
-      // debug = true;
-    }
-    if (debug) {
-      console.log('TOP OF THE LOOP', rnd, newX, newY, beam);
-    }
+    // if (newY === 6 && newX === 7) {
+    //   debug = true;
+    // }
+    // if (debug) {
+    //   console.log('TOP OF THE LOOP', rnd, newX, newY, beam);
+    // }
     if (newX < 0 || newX >= map[0].length || newY < 0 || newY >= map.length) {
       // if (debug) {
       //   console.log('breaking off...');
       // }
       break;
     }
-    if (depth > 100) {
-      // console.log('Too deep', rnd);
+    if (checked.some(d => d.x === newX && d.y === newY && d.beam === beam)) {
+      // Already did this route.
       break;
     }
+    checked.push({ x: newX, y: newY, beam });
+    escape++;
+    if (escape > 1000000) {
+      break;
+    }
+
     const currentNode = map[newY][newX];
-    if (debug) {
-      console.log('currentNode', rnd, currentNode);
-    }
+    // if (debug) {
+    //   console.log('currentNode', rnd, currentNode);
+    // }
 
-    currentNode.energized.push(beam);
+    currentNode.energized = true;
     const command = directions.get(beam + currentNode.sign)!;
-    if (!command) {
-      debug = true;
-    }
+    // if (!command) {
+    //   debug = true;
+    // }
 
-    if (debug) {
-      console.log('beam', rnd, beam);
-      console.log('sign', map[newY][newX].sign);
-      console.log('command', command);
-    }
+    // if (debug) {
+    //   console.log('beam', rnd, beam);
+    //   console.log('sign', map[newY][newX].sign);
+    //   console.log('command', command);
+    // }
     if (command.split) {
-      followBeam(map, command.beam.substring(0, 1), newX - command.x, newY - command.y, ++depth);
-      followBeam(map, command.beam.substring(1, 2), newX + command.x, newY + command.y, ++depth);
+      followBeam(map, command.beam.substring(0, 1), newX - command.x, newY - command.y, checked);
+      followBeam(map, command.beam.substring(1, 2), newX + command.x, newY + command.y, checked);
       break;
     }
 
@@ -103,14 +104,9 @@ function followBeam(map: Node[][], beam: string, x: number, y: number, depth: nu
     newY = newY + command.y;
     beam = command.beam
 
-    if (debug) {
-      console.log('debug next', newX, newY, beam);
-    }
-
-    escape++;
-    if (escape > 100000) {
-      break;
-    }
+    // if (debug) {
+    //   console.log('debug next', newX, newY, beam);
+    // }
   }
 }
 
