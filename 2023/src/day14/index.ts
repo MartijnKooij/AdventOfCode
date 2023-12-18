@@ -24,7 +24,7 @@ const part1 = (rawInput: string) => {
     }
   }
 
-  return sum;
+  return calculateSum(map);
 };
 
 const rollUp = (map: string[][], sx: number, sy: number) => {
@@ -41,16 +41,16 @@ const rollUp = (map: string[][], sx: number, sy: number) => {
 }
 
 const part2 = (rawInput: string) => {
-  const map = parseInput(rawInput);
+  let map = parseInput(rawInput);
   let sum = 0;
   const finds = new Map<number, number[]>();
-  const memo = new Map<string, number>();
+  const memo = new Map<string, { sum: number, map: string[][] }>();
 
   // fs.writeFileSync(`./mapstart.txt`, map.map(l => l.join('')).join('\n'));
 
   const cycles = 1000000000; // 1000000000;
   for (let i = 0; i < cycles; i++) {
-    if (i % 1000000 === 0) {
+    if (i % 10000000 === 0) {
       console.log('Still going', cycles - i, memo.size);
     }
     let key = '';
@@ -60,40 +60,42 @@ const part2 = (rawInput: string) => {
       }
     }
     if (memo.has(key)) {
-      sum = memo.get(key)!;
+      let { sum: s, map: m } = memo.get(key)!;
+      sum = s;
+      map = m;
       continue;
     }
 
     for (let y = 0; y < map.length; y++) {
       for (let x = 0; x < map[y].length; x++) {
         if (map[y][x] === 'O') {
-          rollDirection(map, x, y, 0, -1);
+          rollDirection(map, x, y, 0, -1); // N
         }
       }
     }
     for (let y = 0; y < map.length; y++) {
       for (let x = 0; x < map[y].length; x++) {
         if (map[y][x] === 'O') {
-          rollDirection(map, x, y, -1, 0);
+          rollDirection(map, x, y, -1, 0); // W
         }
       }
     }
     for (let y = map.length - 1; y >= 0; y--) {
       for (let x = map[y].length - 1; x >= 0; x--) {
         if (map[y][x] === 'O') {
-          rollDirection(map, x, y, 0, 1);
+          rollDirection(map, x, y, 0, 1); // S
         }
       }
     }
     for (let y = map.length - 1; y >= 0; y--) {
       for (let x = map[y].length - 1; x >= 0; x--) {
         if (map[y][x] === 'O') {
-          rollDirection(map, x, y, 1, 0);
+          rollDirection(map, x, y, 1, 0); // E
         }
       }
     }
     sum = calculateSum(map);
-    memo.set(key, sum);
+    memo.set(key, { sum, map });
 
     // const indices = finds.get(sum) || [];
     // indices.push(i+1);
@@ -221,7 +223,7 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  onlyTests: false,
 });
 
 
