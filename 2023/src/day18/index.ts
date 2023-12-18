@@ -67,7 +67,7 @@ const part2 = (rawInput: string) => {
   const data = parseInput(rawInput).split('\n').filter(l => !!l).map(l => {
     const dict = ['R', 'D', 'L', 'U'];
     const p = l.split(' ');
-    const color = p[2].replace('(', '').replace(')', ''); // #0dc571
+    const color = p[2].replace('(', '').replace(')', '');
     const sign = dict[parseInt(color.substring(6, 7), 16)];
     const length = parseInt(color.substring(1, 6), 16);
     return {
@@ -80,71 +80,44 @@ const part2 = (rawInput: string) => {
   });
   console.log('data', data);
 
-  const nodes: Node[] = [];
-  let x = 0;
-  let y = 0;
-  data.forEach(d => {
-    for (let i = 0; i < d.length; i++) {
-      x += directions.get(d.sign)!.x;
-      y += directions.get(d.sign)!.y;
-      nodes.push({ ...d, x, y });
+  let x = 0, y = 0;
+  let polygon = [[x, y]];
+  
+  for (let i = 0; i < data.length; i++) {
+    switch (data[i].sign) {
+      case 'R':
+        x += data[i].length;
+        break;
+      case 'D':
+        y -= data[i].length;
+        break;
+      case 'L':
+        x -= data[i].length;
+        break;
+      case 'U':
+        y += data[i].length;
+        break;
     }
-  });
+    polygon.push([x, y]);
+  }
+  console.log('polygon', polygon);
 
-  const minX = minProperty(nodes, 'x');
-  const minY = minProperty(nodes, 'y');
-  const width = minX + maxProperty(nodes, 'x') + 1;
-  const height = minY + maxProperty(nodes, 'y') + 1;
+  polygon.reverse();
+  const area = calculateArea(polygon);
 
-  console.log('size', minX, minY, width, height);
+  console.log('area', area, 952408144115 - area);
 
-  const walls = new Set<string>();
-  nodes.forEach(n => walls.add(`${n.y - minY},${n.x - minX}`));
-  const centerX = Math.floor((minX + width - minX) / 2);
-  const centerY = Math.floor((minY + height - minY) / 2);
-  console.log('walls', walls.size, centerX, centerY);
-
-  const filledMap = floodFill2(walls, [centerY, centerX], '*', width, height);
-  // fs.writeFileSync('./map.txt', filledMap.);
-
-  return filledMap.size + nodes.length;
+  return area;;
 };
 
-function minProperty(nodes: Node[], property: keyof Node): number {
-  let min = Infinity;
-  for (const node of nodes) {
-    const value = Math.abs(Number(node[property]));
-    if (value < min) {
-      min = value;
-    }
+function calculateArea(coords: number[][]): number {
+  let area = 0;
+  for (let i = 0; i < coords.length; i++) {
+    const [x1, y1] = coords[i];
+    const [x2, y2] = coords[(i + 1) % coords.length];
+    area += (x1 + x2) * (y1 - y2);
   }
-  return min;
-}
-
-function maxProperty(nodes: Node[], property: keyof Node): number {
-  let max = -Infinity;
-  for (const node of nodes) {
-    const value = Number(node[property]);
-    if (value > max) {
-      max = value;
-    }
-  }
-  return max;
-}
-
-function floodFill2(walls: Set<string>, start: Point, fill: string, width: number, height: number): Set<string> {
-  const filled = new Set<string>();
-  const queue: Point[] = [start];
-  while (queue.length > 0) {
-    const [y, x] = queue.shift() as Point;
-    const key = `${y},${x}`;
-    if (y < 0 || x < 0 || y >= height || x >= width || walls.has(key) || filled.has(key)) {
-      continue;
-    }
-    filled.add(key);
-    queue.push([y - 1, x], [y + 1, x], [y, x - 1], [y, x + 1]);
-  }
-  return filled;
+  return Math.abs(area) / 2;
 }
 
 function floodFill(map: string[][], start: Point, wall: string, fill: string): void {

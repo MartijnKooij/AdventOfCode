@@ -19,7 +19,9 @@
     "aocrunner": "^1.9.6",
     "prettier": "^2.8.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "decimal.js": "^10.4.3"
+  },
   "engines": {
     "node": ">=16.13.0"
   }
