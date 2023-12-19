@@ -292,12 +292,14 @@
     },
     {
       "part1": {
-        "solved": false,
-        "result": "466057",
+        "solved": true,
+        "result": "421983",
         "attempts": [
-          "466057"
+          "466057",
+          "448375 (too high",
+          "417319 (too low)"
         ],
-        "time": 201.5756
+        "time": 6.7083
       },
       "part2": {
         "solved": false,
