@@ -82,7 +82,7 @@ const part2 = (rawInput: string) => {
 
   let x = 0, y = 0;
   let polygon = [[x, y]];
-  
+
   for (let i = 0; i < data.length; i++) {
     switch (data[i].sign) {
       case 'R':
@@ -102,12 +102,14 @@ const part2 = (rawInput: string) => {
   }
   console.log('polygon', polygon);
 
-  polygon.reverse();
+  const perimeter = data.reduce((p, c) => p + Math.abs(c.length), 0);
+  console.log('perimeter', perimeter);
+
   const area = calculateArea(polygon);
 
-  console.log('area', area, 952408144115 - area);
+  console.log('area', area, 952408144115 - (area - perimeter / 2 + 1) - perimeter);
 
-  return area;;
+  return area + (perimeter / 2 + 1);
 };
 
 function calculateArea(coords: number[][]): number {
@@ -184,5 +186,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  onlyTests: false,
 });

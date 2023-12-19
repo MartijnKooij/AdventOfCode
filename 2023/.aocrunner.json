@@ -281,13 +281,13 @@
         "attempts": [
           "1318"
         ],
-        "time": 1619.5587
+        "time": 2903.8221
       },
       "part2": {
-        "solved": false,
-        "result": "62365",
+        "solved": true,
+        "result": "159485361249806",
         "attempts": [],
-        "time": 1540.1838
+        "time": 76.4075
       }
     },
     {
