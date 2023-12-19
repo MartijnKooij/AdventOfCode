@@ -2,7 +2,6 @@ import run from 'aocrunner';
 
 const parseInput = (rawInput: string) => rawInput;
 
-type Comparator = '<' | '>';
 class Command {
   public functions: Map<string, ((val: number) => string | null)> = new Map();
   public parts: Map<string, number> = new Map([['x', 0], ['m', 0], ['a', 0], ['s', 0]]);
@@ -36,19 +35,18 @@ const part1 = (rawInput: string) => {
 
   parts.every(part => {
     let c: string | null = 'in';
-    console.log('checking parts at [in]', part);
+    // console.log('checking parts at [in]', part);
     while (true) {
       console.log('checking command', c);
       const command = commands.get(c)! as Command;
 
       let escape = false;
-      for (let partId in part) {
+      for (let f of command.functions) {
+        const partId = f[0];
         let updateCommand = false;
-        if (command.functions.has(partId)) {
-          c = (command.functions.get(partId)!)(part[partId]);
-          if (c) {
-            updateCommand = true;
-          }
+        c = (command.functions.get(partId)!)(part[partId]);
+        if (c) {
+          updateCommand = true;
         }
         console.log('new command', c, partId);
 
@@ -88,7 +86,7 @@ const part2 = (rawInput: string) => {
 };
 
 function createLambda(str: string): (val: number) => string | null {
-  const [s, p, comparator, value, result] = str.split(/([a-zA-Z]+)([<>])(\d+):([a-zA-Z]+)/);
+  const [, , comparator, value, result] = str.split(/([a-zA-Z]+)([<>])(\d+):([a-zA-Z]+)/);
   const numValue = parseInt(value);
 
   console.log('lambda', comparator, value, result);
@@ -150,5 +148,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: false,
+  onlyTests: true,
 });
