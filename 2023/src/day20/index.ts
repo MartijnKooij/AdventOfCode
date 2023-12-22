@@ -1,11 +1,11 @@
 import run from 'aocrunner';
 
-type State = 'low' | 'high';
+type State = 'low' | 'high' | '';
 type Node = { id: string; type: string, state: State, targets: string[] };
 const nodeFunctions: Record<string, (pulse: State, node: Node) => State> = {
   '%': (pulse: State, node: Node): State => {
     if (pulse === 'high') {
-      return 'high';
+      return '';
     }
     node.state = node.state === 'high' ? 'low' : 'high';
     return node.state;
@@ -36,21 +36,30 @@ const part1 = (rawInput: string) => {
   const network = parseInput(rawInput);
   console.log(network);
 
-  let escape = 0;
-  const targets: { target: string; pulse: State }[] = [...network.get('broadcaster')!.targets].map(t => ({ target: t, pulse: 'low' }));
   let lows = 0, highs = 0;
-  while (targets.length > 0) {
-    const currentTargets = targets.splice(0, targets.length);
-    currentTargets.map(t => ({ ...t, target: network.get(t.target)! })).forEach((target) => {
-      const newPulse = nodeFunctions[target.target.type](target.pulse, target.target);
-      if (newPulse === 'high') highs++;
-      else lows++;
-      targets.push({ target: target.target.id, pulse: newPulse });
-    });
+  for (let p = 0; p < 1000; p++) {
+    const targets: { target: string; pulse: State }[] = [...network.get('broadcaster')!.targets].map(t => ({ target: t, pulse: 'low' }));
+    lows ++; // 1 for the button?
 
-    escape++;
-    if (escape > 1000) {
-      break;
+    while (targets.length > 0) {
+      const currentTargets = targets.splice(0, targets.length);
+      const mappedTargets = currentTargets.map(t => ({ ...t, target: network.get(t.target)! })).filter(t => !!t.target);
+      // console.log('processing targets', mappedTargets);
+      mappedTargets.forEach((target) => {
+        if (target.pulse === 'high') highs++;
+        else if (target.pulse === 'low') lows++;
+
+        // console.log('in', target.target.id + target.target.type, target.pulse);
+        const newPulse = nodeFunctions[target.target.type](target.pulse, target.target);
+        // console.log('out', target.target.id + target.target.type, newPulse, target.target.targets.join(','));
+
+        if (newPulse) {
+          targets.push(...target.target.targets.map(t => ({ target: t, pulse: newPulse })));
+        }
+      });
+      if (lows % 100000 === 0 || highs % 100000 === 0) {
+        console.log('Still going...', lows, highs);
+      }
     }
   }
 
@@ -91,5 +100,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  onlyTests: false,
 });
