@@ -53,12 +53,29 @@ const part2 = (rawInput: string) => {
   let count = 0;
   for (let row = 0; row < matrix.length - 2; row++) {
     for (let col = 0; col < matrix[0].length - 2; col++) {
-      if ((matrix[row][col] === 'M' && matrix[row][col + 2] === 'S') ||
-        (matrix[row][col] === 'S' && matrix[row][col + 2] === 'M')) {
-        if (matrix[row + 1][col + 1] === 'A') {
-          if ((matrix[row + 2][col] === 'M' && matrix[row + 2][col + 2] === 'S') ||
-            (matrix[row + 2][col] === 'S' && matrix[row + 2][col + 2] === 'M')) {
+      if (matrix[row + 1][col + 1] === 'A') {
+        if (matrix[row][col] === 'M' && matrix[row][col + 2] === 'S') {
+          if (matrix[row + 2][col] === 'M' && matrix[row + 2][col + 2] === 'S') {
             count++;
+            console.log('X-MAS found at', row, col);
+          }
+        }
+        if (matrix[row][col] === 'M' && matrix[row][col + 2] === 'M') {
+          if (matrix[row + 2][col] === 'S' && matrix[row + 2][col + 2] === 'S') {
+            count++;
+            console.log('X-MAS found at', row, col);
+          }
+        }
+        if (matrix[row][col] === 'S' && matrix[row][col + 2] === 'M') {
+          if (matrix[row + 2][col] === 'S' && matrix[row + 2][col + 2] === 'M') {
+            count++;
+            console.log('X-MAS found at', row, col);
+          }
+        }
+        if (matrix[row][col] === 'S' && matrix[row][col + 2] === 'S') {
+          if (matrix[row + 2][col] === 'M' && matrix[row + 2][col + 2] === 'M') {
+            count++;
+            console.log('X-MAS found at', row, col);
           }
         }
       }
@@ -108,5 +125,5 @@ MXMXAXMASX
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  onlyTests: false,
 });
