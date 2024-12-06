@@ -1,4 +1,4 @@
-export class Map {
+export class AocMap {
     private data: string[][];
 
     constructor(data: string) {
