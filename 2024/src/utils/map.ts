@@ -17,6 +17,10 @@ export class AocMap {
         return this.data[0].length;
     }
 
+    toString() {
+        return this.data.map(row => row.join('')).join('\n');
+    }
+
     insertRow(rowIndex: number, value: string) {
         this.data.splice(rowIndex, 0, Array(this.columns).fill(value));
     }

@@ -88,13 +88,13 @@
           "7",
           "955"
         ],
-        "time": 6.7818
+        "time": 2.0633
       },
       "part2": {
-        "solved": false,
-        "result": null,
+        "solved": true,
+        "result": "1793",
         "attempts": [],
-        "time": null
+        "time": 19110.208
       }
     },
     {
