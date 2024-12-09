@@ -134,13 +134,13 @@
           "88881734731",
           "6241646176135"
         ],
-        "time": 938.1885
+        "time": 2818.6791
       },
       "part2": {
-        "solved": false,
-        "result": null,
+        "solved": true,
+        "result": "6272188244509",
         "attempts": [],
-        "time": null
+        "time": 2845.4503
       }
     },
     {
