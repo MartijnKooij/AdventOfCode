@@ -1,54 +1,52 @@
 import run from 'aocrunner';
-import { get } from 'http';
+import * as fs from 'fs';
 
-type blockType = 'file' | 'space';
-const parseInput = (rawInput: string) => rawInput.split('\n').map(l => {
-  return l.split('').map(Number).map((n, i) => {
-    return {
-      id: Math.floor(i / 2),
-      type: i % 2 === 0 ? 'space' : 'file' as blockType,
-      size: n,
-    };
+const parseInput = (rawInput: string) => {
+  let sector: string[] = [];
+  rawInput.split('').map(Number).forEach((n, i) => {
+    const id = Math.floor(i / 2);
+    const type = i % 2 === 0 ? 'file' : 'space';
+    if (type === 'file') {
+      sector.push(...Array(n).fill(id));
+    } else {
+      sector.push(...Array(n).fill('.'));
+    }
   });
-});
-const getSpaceAvailable = (sector: { id: number, type: blockType, size: number }[]): number => {
-  if (sector[sector.length - 1].type === 'file') {
-    return sector.filter(b => b.type === 'space').reduce((acc, b) => acc + b.size, 0);
-  }
-  return sector.slice(0, sector.length - 1).filter(b => b.type === 'space').reduce((acc, b) => acc + b.size, 0);
+
+  return sector;
 };
+const findLastFile = (values: string[]): { value: string, index: number } | null => {
+  for (let i = values.length - 1; i >= 0; i--) {
+    if (values[i] !== '.') {
+      return { value: values[i], index: i };
+    }
+  }
+  return null;
+}
 
 const part1 = (rawInput: string) => {
-  const sector = parseInput(rawInput)[0];
-  let loopCount = 0;
+  let sector = parseInput(rawInput);
 
   while (true) {
-    const spaceAvailable = getSpaceAvailable(sector);
-    if (spaceAvailable === 0) {
+    const firstSpace = sector.indexOf('.');
+    const lastFileId = findLastFile(sector);
+    if (!lastFileId || firstSpace >= lastFileId.index) {
       break;
     }
-    const lastFile = sector.findLast(b => b.type === 'file' && b.size > 0);
-    if (!lastFile || lastFile.size > spaceAvailable) {
-      break;
-    }
-    for (const block of sector) {
-      if (block.type === 'space') {
-        const blockSize = block.size;
-        lastFile.size -= block.size;
-        block.type = 'file';
-        block.id = lastFile.id;
-        if (lastFile.size === 0) {
-          break;
-        }
-      }
-    }
-    loopCount++;
-    if (loopCount > 1000) {
-      break;
+    sector[firstSpace] = lastFileId.value;
+    sector[lastFileId.index] = '.';
+  }
+
+  fs.writeFileSync('output.txt', sector.join(''));
+
+  let sum = 0;
+  for (let i = 0; i < sector.length; i++) {
+    if (sector[i] !== '.') {
+      sum += i * Number(sector[i]);
     }
   }
 
-  return;
+  return sum;
 };
 
 const part2 = (rawInput: string) => {
