@@ -17,6 +17,10 @@ export class AocMap {
         return this.data[0].length;
     }
 
+    get(x: number, y: number) {
+        return this.data[y][x];
+    }
+
     toString() {
         return this.data.map(row => row.join('')).join('\n');
     }
