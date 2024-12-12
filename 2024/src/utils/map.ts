@@ -21,6 +21,10 @@ export class AocMap {
         return this.data[y][x];
     }
 
+    set(x: number, y: number, value: string) {
+        this.data[y][x] = value;
+    }
+
     toString() {
         return this.data.map(row => row.join('')).join('\n');
     }
