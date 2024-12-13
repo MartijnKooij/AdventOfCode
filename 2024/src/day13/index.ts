@@ -7,7 +7,7 @@ const parseInput = (rawInput: string) => {
     .map((line) => {
       const [buttonALine, buttonBLine, prizeLine] = line.split('\n');
 
-      const parsePosition = (position: string) => {
+      const parsePosition = (position: string): Vector => {
         const [xPart, yPart] = position.split(', ');
         const x = parseInt(xPart.split(/[+=]/)[1]);
         const y = parseInt(yPart.split(/[+=]/)[1]);
@@ -26,25 +26,45 @@ const parseInput = (rawInput: string) => {
     });
 };
 
+type Vector = { x: number, y: number };
+
+const cramersRule = (a: Vector, b: Vector, p: Vector) => {
+  const A = (p.x * b.y - p.y * b.x) / (a.x * b.y - a.y * b.x);
+  const B = (a.x * p.y - a.y * p.x) / (a.x * b.y - a.y * b.x);
+
+  return { A, B };
+}
+
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
 
+  let tokens = 0;
   for (const { buttonA, buttonB, prize } of input) {
-    let tX = 0;
-    let tY = 0;
-    for (let aPresses = 0; aPresses < 100; aPresses++) {
-      for (let bPresses = 0; bPresses < 100; bPresses++) {
-      }
+    const { A, B } = cramersRule(buttonA, buttonB, prize);
+    if (A >= 100 || B >= 100 || !Number.isInteger(A) || !Number.isInteger(B)) {
+      continue;
     }
+    console.log(A, B, buttonA, buttonB, prize);
+    tokens += A * 3 + B;
   }
 
-  return;
+  return tokens;
 };
 
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
 
-  return;
+  let tokens = 0;
+  for (const { buttonA, buttonB, prize } of input) {
+    const { A, B } = cramersRule(buttonA, buttonB, { x: prize.x + 10000000000000, y: prize.y + 10000000000000 });
+    if (!Number.isInteger(A) || !Number.isInteger(B)) {
+      continue;
+    }
+    console.log(A, B, buttonA, buttonB, prize);
+    tokens += A * 3 + B;
+  }
+
+  return tokens;
 };
 
 run({
@@ -82,5 +102,5 @@ Prize: X=18641, Y=10279
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  onlyTests: false,
 });
