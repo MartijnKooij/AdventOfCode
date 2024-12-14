@@ -21,6 +21,14 @@ export class AocMap {
         return this.data[y][x];
     }
 
+    tryGet(x: number, y: number) {
+        if (x < 0 || x >= this.columns || y < 0 || y >= this.rows) {
+            return null;
+        }
+
+        return this.get(x, y);
+    }
+
     set(x: number, y: number, value: string) {
         this.data[y][x] = value;
     }

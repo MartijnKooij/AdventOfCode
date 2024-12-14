@@ -128,32 +128,28 @@ const calculatePerimeter = (visited: Set<string>, map: AocMap) => {
     const bottomLeft = { x: x + 1, y: y - 1 };
     const bottomRight = { x: x + 1, y: y + 1 };
 
-    // Check all convex corners
-    if (
-      (top.x < 0 || top.x > map.columns - 1 || top.y < 0 || top.y > map.rows - 1 || map.get(top.x, top.y) !== area) &&
-      (right.x < 0 || right.x > map.columns - 1 || right.y < 0 || right.y > map.rows - 1 || map.get(right.x, right.y) !== area) &&
-      (topRight.x < 0 || topRight.x > map.columns - 1 || topRight.y < 0 || topRight.y > map.rows - 1 || map.get(topRight.x, topRight.y) === area)
-    ) {
-      corners++;
-    }
+    // Collect all adjacent areas filling the ones out of the maps bounds with a dot.
+    const adjacentAreas = [
+      map.tryGet(top.x, top.y) || '.',
+      map.tryGet(topRight.x, topRight.y) || '.',
+      map.tryGet(right.x, right.y) || '.',
+      map.tryGet(bottomRight.x, bottomRight.y) || '.',
+      map.tryGet(bottom.x, bottom.y) || '.',
+      map.tryGet(bottomLeft.x, bottomLeft.y) || '.',
+      map.tryGet(left.x, left.y) || '.',
+      map.tryGet(topLeft.x, topLeft.y) || '.',
+    ];
 
-    // Check all concave corners
-    if (
-      (top.x < 0 || top.x > map.columns - 1 || top.y < 0 || top.y > map.rows - 1 || map.get(top.x, top.y) === area) &&
-      (right.x < 0 || right.x > map.columns - 1 || right.y < 0 || right.y > map.rows - 1 || map.get(right.x, right.y) === area) &&
-      (topRight.x < 0 || topRight.x > map.columns - 1 || topRight.y < 0 || topRight.y > map.rows - 1 || map.get(topRight.x, topRight.y) !== area)
-    ) {
-      corners++;
-    }
+    corners += adjacentAreas[0] !== area && adjacentAreas[2] !== area ? 1 : 0;
+    corners += adjacentAreas[2] !== area && adjacentAreas[4] !== area ? 1 : 0;
+    corners += adjacentAreas[4] !== area && adjacentAreas[6] !== area ? 1 : 0;
+    corners += adjacentAreas[6] !== area && adjacentAreas[0] !== area ? 1 : 0;
 
-    // Check all diagonal corners
-    if (
-      (top.x < 0 || top.x > map.columns - 1 || top.y < 0 || top.y > map.rows - 1 || map.get(top.x, top.y) !== area) &&
-      (right.x < 0 || right.x > map.columns - 1 || right.y < 0 || right.y > map.rows - 1 || map.get(right.x, right.y) !== area) &&
-      (topRight.x < 0 || topRight.x > map.columns - 1 || topRight.y < 0 || topRight.y > map.rows - 1 || map.get(topRight.x, topRight.y) !== area)
-    ) {
-      corners++;
-    }
+    corners += adjacentAreas[0] === area && adjacentAreas[2] === area && adjacentAreas[1] !== area ? 1 : 0;
+    corners += adjacentAreas[2] === area && adjacentAreas[4] === area && adjacentAreas[3] !== area ? 1 : 0;
+    corners += adjacentAreas[4] === area && adjacentAreas[6] === area && adjacentAreas[5] !== area ? 1 : 0;
+    corners += adjacentAreas[6] === area && adjacentAreas[0] === area && adjacentAreas[7] !== area ? 1 : 0;
+
   }
   return corners;
 };
@@ -222,5 +218,5 @@ EEEC
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  onlyTests: false,
 });
