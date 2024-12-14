@@ -74,8 +74,92 @@ const part1 = (rawInput: string) => {
 
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
+  const mapHeight = 103; // 7 / 103
+  const mapWidth = 101; // 11 / 101
+  let mapData = '.'.repeat(mapWidth);
+  for (let i = 1; i < mapHeight; i++) {
+    mapData += '\n' + '.'.repeat(mapWidth);
+  }
+  const map = new AocMap(mapData);
 
-  return;
+  const sleep = (ms: number) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  const draw = async (t: number) => {
+    for (const robot of input) {
+      let newPX = robot.p[0] + robot.v[0];
+      let newPY = robot.p[1] + robot.v[1];
+
+      // If x or y is out of the map bounds wrap around to the other side.
+      newPX = newPX < 0 ? mapWidth + newPX : newPX;
+      newPY = newPY < 0 ? mapHeight + newPY : newPY;
+      newPX = newPX >= mapWidth ? newPX - mapWidth : newPX;
+      newPY = newPY >= mapHeight ? newPY - mapHeight : newPY;
+
+      robot.p[0] = newPX;
+      robot.p[1] = newPY;
+    }
+    for (let y = 0; y < mapHeight; y++) {
+      for (let x = 0; x < mapWidth; x++) {
+        map.set(x, y, '.');
+      }
+    }
+    for (const { p, v } of input) {
+      if (map.get(p[0], p[1]) === '.') {
+        map.set(p[0], p[1], '#');
+      }
+    }
+    console.log('time:', t);
+    if (t > 8000) {
+      console.log(map.toString());
+    }
+  }
+
+  const hasCluster = () => {
+    // Check if there's a cluster of '#' in the map.
+    for (let y = 0; y < mapHeight; y++) {
+      for (let x = 0; x < mapWidth; x++) {
+        if (map.get(x, y) === '#') {
+          // Check if the surounding tiles are also '#' while considering the map's bounds.
+          let cluster = 0;
+          cluster += map.get(x - 1 < 0 ? mapWidth - 1 : x - 1, y) === '#' ? 1 : 0;
+          cluster += map.get(x + 1 >= mapWidth ? 0 : x + 1, y) === '#' ? 1 : 0;
+          cluster += map.get(x, y - 1 < 0 ? mapHeight - 1 : y - 1) === '#' ? 1 : 0;
+          cluster += map.get(x, y + 1 >= mapHeight ? 0 : y + 1) === '#' ? 1 : 0;
+          // Check diagonals.
+          cluster += map.get(x - 1 < 0 ? mapWidth - 1 : x - 1, y - 1 < 0 ? mapHeight - 1 : y - 1) === '#' ? 1 : 0;
+          cluster += map.get(x + 1 >= mapWidth ? 0 : x + 1, y - 1 < 0 ? mapHeight - 1 : y - 1) === '#' ? 1 : 0;
+          cluster += map.get(x - 1 < 0 ? mapWidth - 1 : x - 1, y + 1 >= mapHeight ? 0 : y + 1) === '#' ? 1 : 0;
+          cluster += map.get(x + 1 >= mapWidth ? 0 : x + 1, y + 1 >= mapHeight ? 0 : y + 1) === '#' ? 1 : 0;
+
+          if (cluster >= 5) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+
+  (async () => {
+    for (let t = 0; t < 8200; t++) {
+      if (t > 8000) {
+        process.stdout.write('\x1Bc');
+      }
+
+      await draw(t);
+
+      let timeout = 0;
+      if (hasCluster() && t > 8000) {
+        timeout = 5000;
+      }
+      if (timeout > 0) {
+        await sleep(timeout);
+      }
+    }
+  })();
+
+  return 8168;
 };
 
 run({
