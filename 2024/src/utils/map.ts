@@ -33,6 +33,18 @@ export class AocMap {
         this.data[y][x] = value;
     }
 
+    find(value: string) {
+        for (let y = 0; y < this.rows; y++) {
+            for (let x = 0; x < this.columns; x++) {
+                if (this.get(x, y) === value) {
+                    return { x, y };
+                }
+            }
+        }
+
+        return null;
+    }
+
     toString() {
         return this.data.map(row => row.join('')).join('\n');
     }
