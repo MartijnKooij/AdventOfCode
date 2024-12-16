@@ -65,6 +65,10 @@ export class AocMap {
         }
     }
 
+    replaceRow(rowIndex: number, value: string[]) {
+        this.data[rowIndex] = value;
+    }
+
     insertColumns(columnIndex: number, value: string, columns: number) {
         for (let c = 1; c < columns; c++) {
             this.insertColumn(columnIndex, value);
