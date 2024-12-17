@@ -2,49 +2,29 @@ import run from 'aocrunner';
 import { AocMap } from '../utils/map.js';
 import { Point } from '../utils/point.js';
 
-type Direction = 'right' | 'left' | 'down' | 'up';
-
-const directions: Map<Direction, Point> = new Map([
-  ['right', { x: 1, y: 0 },],
-  ['down', { x: 0, y: 1 },],
-  ['left', { x: -1, y: 0 },],
-  ['up', { x: 0, y: -1 }]
-]);
-
 const parseInput = (rawInput: string) => new AocMap(rawInput);
 
-const dfs = (map: AocMap, position: Point, path: Direction[], visited: Set<string>, paths: Direction[], nextDirection: Direction): void => {
-  const { x, y } = position;
-
-  // If out of bounds or hit a wall, return
-  if (x < 0 || y < 0 || x >= map.columns || y >= map.rows || map.get(x, y) === '#') return;
-
-  // If this point has been visited, return
-  if (visited.has(`${x},${y}`)) return;
-
-  // If reached the end, add the path to paths
-  if (map.get(x, y) === 'E') {
-    paths.push(nextDirection);
-    return;
+const walk = (map: AocMap, start: Point): void => {
+  const dx = [-1, 0, 1, 0];
+  const dy = [0, 1, 0, -1];
+  const queue: [Point, number][] = [[start, 0]];
+  while (queue.length > 0) {
+    const [location, step] = queue.shift()!;
+    for (let i = 0; i < 4; i++) {
+      const nx = location.x + dx[i];
+      const ny = location.y + dy[i];
+      const next = map.tryGet(nx, ny);
+      if (next === '.') {
+        map.set(nx, ny, 'O');
+        queue.push([{ x: nx, y: ny } as Point, step + 1]);
+      }
+    }
+    map.set(location.x, location.y, '.');
   }
-
-  // Mark the current point as visited
-  visited.add(`${x},${y}`);
-
-  // Explore all directions
-  dfs(map, { x: x + 1, y }, [...path, 'right'], visited, paths, 'right');
-  dfs(map, { x: x - 1, y }, [...path, 'left'], visited, paths, 'left');
-  dfs(map, { x, y: y + 1 }, [...path, 'down'], visited, paths, 'down');
-  dfs(map, { x, y: y - 1 }, [...path, 'up'], visited, paths, 'up');
-
-  // Unmark the current point before backtracking
-  map.set(x, y, '.');
 }
 
 const part1 = (rawInput: string) => {
   const input = parseInput(rawInput);
-  const paths: Direction[] = [];
-  const visited = new Set<string>();
   const start: Point = { x: 0, y: 0 };
 
   // Find the start
@@ -59,9 +39,8 @@ const part1 = (rawInput: string) => {
     }
   }
 
-  dfs(input, start, [], visited, paths, 'right');
-
-  console.log(paths);
+  walk(input, start);
+  console.log(input.toString());
 
   return;
 };
