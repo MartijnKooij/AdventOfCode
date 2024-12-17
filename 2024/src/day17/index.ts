@@ -59,9 +59,35 @@ const part1 = (rawInput: string) => {
 };
 
 const part2 = (rawInput: string) => {
-  const input = parseInput(rawInput);
+  const app = parseInput(rawInput);
+  // const app = {
+  //   register: { A: 0, B: 29, C: 0 },
+  //   program: [1, 7]
+  // };
+  const find = app.program.join(',');
+  let a = 0;
+  while (true) {
+    const newApp = {
+      register: { A: a, B: app.register.B, C: app.register.C },
+      program: app.program
+    };
 
-  return;
+    let instruction = 0;
+    output.length = 0;
+    while (true) {
+      const opcode = newApp.program[instruction];
+      const operand = newApp.program[instruction + 1];
+      // console.log('INSTRUCTION', instruction, opcode, operand);
+      instruction = operations[opcode as OpCode](instruction, newApp.register, operand);
+      // console.log('RESULT', newApp.register, instruction);
+      if (instruction >= newApp.program.length) break;
+    }
+
+    if (output.join(',') === find) return a;
+    a++;
+    console.log('not yet found...', a);
+  }
+  return 'Not found';
 };
 
 run({
@@ -81,10 +107,15 @@ Program: 0,1,5,4,3,0
   },
   part2: {
     tests: [
-      // {
-      //   input: ``,
-      //   expected: "",
-      // },
+      {
+        input: `Register A: 2024
+Register B: 0
+Register C: 0
+
+Program: 0,3,5,4,3,0
+`,
+        expected: 117440,
+      },
     ],
     solution: part2,
   },
