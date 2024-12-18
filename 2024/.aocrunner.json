@@ -270,13 +270,13 @@
           "402",
           "214"
         ],
-        "time": 30.832
+        "time": 28.1374
       },
       "part2": {
-        "solved": false,
-        "result": null,
+        "solved": true,
+        "result": "16,44",
         "attempts": [],
-        "time": null
+        "time": 17166.2597
       }
     },
     {

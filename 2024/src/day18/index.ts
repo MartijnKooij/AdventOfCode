@@ -63,8 +63,28 @@ const part1 = (rawInput: string) => {
 
 const part2 = (rawInput: string) => {
   const input = parseInput(rawInput);
+  const size = 71; // Real one has 71
+  const start: Point = { x: 0, y: 0 }
+  const end: Point = { x: size - 1, y: size - 1 };
 
-  return;
+  let tmpMap = '';
+  for (let y = 0; y < size; y++) {
+    tmpMap += '.'.repeat(size) + '\n';
+  }
+  const map = new AocMap(tmpMap);
+
+  for (let b = 0; b < input.length; b++) {
+    map.trySet(input[b].x, input[b].y, '#');
+    const result = { answer: Infinity };
+    bfs(map, start, end, result);
+
+    if (result.answer === Infinity) {
+      console.log('Found', input[b]);
+      return `${input[b].x},${input[b].y}`;
+    }
+  }
+
+  return 'Not found';
 };
 
 run({
@@ -105,8 +125,33 @@ run({
   part2: {
     tests: [
       // {
-      //   input: ``,
-      //   expected: "",
+      //   input: `5,4
+      // 4,2
+      // 4,5
+      // 3,0
+      // 2,1
+      // 6,3
+      // 2,4
+      // 1,5
+      // 0,6
+      // 3,3
+      // 2,6
+      // 5,1
+      // 1,2
+      // 5,5
+      // 2,5
+      // 6,5
+      // 1,4
+      // 0,4
+      // 6,4
+      // 1,1
+      // 6,1
+      // 1,0
+      // 0,5
+      // 1,6
+      // 2,0
+      // `,
+      //   expected: '6,1',
       // },
     ],
     solution: part2,
