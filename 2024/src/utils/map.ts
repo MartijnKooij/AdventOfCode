@@ -33,6 +33,13 @@ export class AocMap {
         this.data[y][x] = value;
     }
 
+    trySet(x: number, y: number, value: string) {
+        if (x < 0 || x >= this.columns || y < 0 || y >= this.rows) {
+            return;
+        }
+        this.data[y][x] = value;
+    }
+
     find(value: string) {
         for (let y = 0; y < this.rows; y++) {
             for (let x = 0; x < this.columns; x++) {
