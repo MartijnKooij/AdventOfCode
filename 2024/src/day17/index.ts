@@ -5,21 +5,28 @@ type RegisterType = 'A' | 'B' | 'C';
 type Register = Record<RegisterType, number>;
 
 const output: number[] = [];
-const getOperandValue = (operand: number, register: Register): number => {
-  if (operand <= 3) return operand;
-  if (operand === 4) return register.A;
-  if (operand === 5) return register.B;
-  if (operand === 6) return register.C;
-  if (operand === 7) return 7;
+const operandMap: Record<number, (register: Register) => number> = {
+  0: () => 0,
+  1: () => 1,
+  2: () => 2,
+  3: () => 3,
+  4: (register) => register.A,
+  5: (register) => register.B,
+  6: (register) => register.C,
+  7: () => 7,
+};
 
-  throw new Error(`Invalid operand: ${operand}`);
-}
+const getOperandValue = (operand: number, register: Register): number => {
+  const getValue = operandMap[operand];
+
+  return getValue(register);
+};
 const operations: Record<OpCode, (instruction: number, register: Register, operand: number) => number> = {
   0: (instruction, register, operand) => { register.A = Math.trunc(register.A / Math.pow(2, getOperandValue(operand, register))); return instruction + 2; },
-  1: (instruction, register, operand) => { register.B = register.B ^ getOperandValue(operand, register); return instruction + 2; },
+  1: (instruction, register, operand) => { register.B = (register.B ^ getOperandValue(operand, register)) >>> 0; return instruction + 2; },
   2: (instruction, register, operand) => { register.B = getOperandValue(operand, register) % 8; return instruction + 2; },
   3: (instruction, register, operand) => register.A === 0 ? instruction + 2 : getOperandValue(operand, register),
-  4: (instruction, register, operand) => { register.B = register.B ^ register.C; return instruction + 2; },
+  4: (instruction, register, operand) => { register.B = (register.B ^ register.C) >>> 0; return instruction + 2; },
   5: (instruction, register, operand) => { output.push(getOperandValue(operand, register) % 8); return instruction + 2; },
   6: (instruction, register, operand) => { register.B = Math.trunc(register.A / Math.pow(2, getOperandValue(operand, register))); return instruction + 2; },
   7: (instruction, register, operand) => { register.C = Math.trunc(register.A / Math.pow(2, getOperandValue(operand, register))); return instruction + 2; },
@@ -85,7 +92,9 @@ const part2 = (rawInput: string) => {
 
     if (output.join(',') === find) return a;
     a++;
-    console.log('not yet found...', a);
+    if (a % 100000 === 0) {
+      console.log('not yet found...', a);
+    }
   }
   return 'Not found';
 };
