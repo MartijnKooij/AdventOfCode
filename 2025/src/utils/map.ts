@@ -29,6 +29,21 @@ export class AocMap {
     return this.get(x, y);
   }
 
+  getSurrounding(x: number, y: number) {
+    const positions = [
+      { x: -1, y: -1 },
+      { x: 0, y: -1 },
+      { x: 1, y: -1 },
+      { x: -1, y: 0 },
+      { x: 1, y: 0 },
+      { x: -1, y: 1 },
+      { x: 0, y: 1 },
+      { x: 1, y: 1 },
+    ];
+
+    return positions.map((p) => this.tryGet(x + p.x, y + p.y)).filter((v) => v !== null);
+  }
+
   set(x: number, y: number, value: string) {
     this.data[y][x] = value;
   }
